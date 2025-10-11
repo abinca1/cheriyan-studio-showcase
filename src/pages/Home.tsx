@@ -3,10 +3,15 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
-import heroImage from "@/assets/hero-image.jpg";
+import HeroSlideshow from "@/components/HeroSlideshow";
+import heroImage1 from "@/assets/hero-slideshow-1.jpg";
+import heroImage2 from "@/assets/hero-slideshow-2.jpg";
+import heroImage3 from "@/assets/hero-slideshow-3.jpg";
+import heroImage4 from "@/assets/hero-slideshow-4.jpg";
 
 const Home = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const heroImages = [heroImage1, heroImage2, heroImage3, heroImage4];
 
   useEffect(() => {
     setIsVisible(true);
@@ -18,14 +23,7 @@ const Home = () => {
 
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `url(${heroImage})`,
-          }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60" />
-        </div>
+        <HeroSlideshow images={heroImages} interval={5000} />
 
         <div
           className={`relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto transition-all duration-1000 ${
@@ -47,7 +45,7 @@ const Home = () => {
             <Button
               asChild
               size="lg"
-              className="bg-white text-primary hover:bg-white/90 font-medium"
+              className="bg-accent text-accent-foreground hover:bg-accent/90 font-medium shadow-lg"
             >
               <Link to="/gallery">
                 Explore Portfolio
@@ -58,7 +56,7 @@ const Home = () => {
               asChild
               size="lg"
               variant="outline"
-              className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-primary font-medium"
+              className="bg-white/10 backdrop-blur-sm border-2 border-white text-white hover:bg-white hover:text-primary font-medium"
             >
               <Link to="/contact">Get in Touch</Link>
             </Button>
@@ -117,7 +115,7 @@ const Home = () => {
       </section>
 
       {/* About Preview Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/30">
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-secondary/50">
         <div className="container mx-auto max-w-4xl text-center">
           <h2 className="font-display text-4xl sm:text-5xl font-bold mb-6">
             About the Artist
