@@ -1,7 +1,7 @@
 services:
   - type: static_site
     name: cheriyan-studio-frontend
-    buildCommand: npm ci && npm run build
+    buildCommand: npm install && npx vite build
     staticPublishPath: ./dist
     pullRequestPreviewsEnabled: false
     headers:
