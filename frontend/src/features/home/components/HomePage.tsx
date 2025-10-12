@@ -6,6 +6,7 @@ import Navigation from "@/shared/components/layout/Navigation";
 import HeroSlideshow from "@/shared/components/common/HeroSlideshow";
 import { apiService, type Testimonial } from "@/shared/services/api";
 import SocialMediaLinks from "@/shared/components/common/SocialMediaLinks";
+import { getImageUrl } from "@/shared/utils/imageUtils";
 import fashionImage from "@/assets/gallery-fashion-1.jpg";
 import weddingImage from "@/assets/gallery-wedding-1.jpg";
 import portraitImage from "@/assets/gallery-portrait-1.jpg";
@@ -28,7 +29,7 @@ const HomePage = () => {
       const images = await apiService.getImages();
       const heroImageUrls = images
         .filter(img => img.is_hero_image)
-        .map(img => `http://localhost:8000/static/images/${img.filename}`);
+        .map(img => getImageUrl(img.filename));
 
       setHeroImages(heroImageUrls);
     } catch (error) {

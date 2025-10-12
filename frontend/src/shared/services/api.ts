@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:8000';
+import { apiUrl } from '@/config/env';
+
+const API_BASE_URL = apiUrl;
 
 export interface LoginRequest {
   username: string;

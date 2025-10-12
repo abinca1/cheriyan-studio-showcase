@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '@/shared/components/ui/select';
 import { apiService, type Image, type Category } from '@/shared/services/api';
+import { getImageUrl } from '@/shared/utils/imageUtils';
 
 interface ImageEditDialogProps {
   open: boolean;
@@ -98,8 +99,8 @@ export const ImageEditDialog: React.FC<ImageEditDialogProps> = ({
     }
   };
 
-  const getImageUrl = (image: Image) => {
-    return `http://localhost:8000/static/images/${image.filename}`;
+  const getImageUrlForDialog = (image: Image) => {
+    return getImageUrl(image.filename);
   };
 
   return (
@@ -115,7 +116,7 @@ export const ImageEditDialog: React.FC<ImageEditDialogProps> = ({
         {image && (
           <div className="mb-4">
             <img
-              src={getImageUrl(image)}
+              src={getImageUrlForDialog(image)}
               alt={image.title}
               className="w-full h-48 object-cover rounded-lg border"
             />

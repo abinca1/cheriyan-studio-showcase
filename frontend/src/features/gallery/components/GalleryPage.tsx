@@ -4,6 +4,7 @@ import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/shared/components/ui";
 import { apiService, type Image, type Category as ApiCategory } from "@/shared/services/api";
 import SocialMediaLinks from "@/shared/components/common/SocialMediaLinks";
+import { getImageUrl } from "@/shared/utils/imageUtils";
 
 import type { Category, GalleryImage } from "../types";
 
@@ -42,7 +43,7 @@ const GalleryPage = () => {
   // Convert API images to gallery images and filter
   const galleryImages: GalleryImage[] = images.map(img => ({
     id: img.id,
-    src: `http://localhost:8000/static/images/${img.filename}`,
+    src: getImageUrl(img.filename),
     category: img.category || "Uncategorized",
     title: img.title
   }));
