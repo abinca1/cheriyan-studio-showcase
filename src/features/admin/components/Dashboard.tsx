@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../shared/contexts/AuthContext';
-import { apiService, Image, Testimonial, HeroSlide, Category } from '../../../shared/services/api';
+import { apiService, Image, Testimonial, HeroSlide, Category, SocialMedia } from '../../../shared/services/api';
 import { Button } from '../../../shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../shared/components/ui/card';
 import { Badge } from '../../../shared/components/ui/badge';
@@ -22,9 +22,11 @@ import {
   Tag
 } from 'lucide-react';
 import { ImageUploadDialog } from './ImageUploadDialog';
+import { ImageEditDialog } from './ImageEditDialog';
 import { ImageGrid } from './ImageGrid';
 import { TestimonialDialog } from './TestimonialDialog';
 import { HeroSlideDialog } from './HeroSlideDialog';
+import { SocialMediaDialog } from './SocialMediaDialog';
 
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -32,11 +34,16 @@ export const Dashboard: React.FC = () => {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [socialMediaLinks, setSocialMediaLinks] = useState<SocialMedia[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingImage, setEditingImage] = useState<Image | null>(null);
   const [showTestimonialDialog, setShowTestimonialDialog] = useState(false);
   const [showHeroSlideDialog, setShowHeroSlideDialog] = useState(false);
+  const [showSocialMediaDialog, setShowSocialMediaDialog] = useState(false);
+  const [editingSocialMedia, setEditingSocialMedia] = useState<SocialMedia | null>(null);
 
   const loadImages = async () => {
     try {
@@ -77,12 +84,22 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  const loadSocialMediaLinks = async () => {
+    try {
+      const data = await apiService.getSocialMediaLinks(false); // Load all links
+      setSocialMediaLinks(data);
+    } catch (err) {
+      console.error('Failed to load social media links:', err);
+    }
+  };
+
   const loadAllData = async () => {
     await Promise.all([
       loadImages(),
       loadTestimonials(),
       loadHeroSlides(),
-      loadCategories()
+      loadCategories(),
+      loadSocialMediaLinks()
     ]);
   };
 
@@ -97,6 +114,11 @@ export const Dashboard: React.FC = () => {
     } catch (err) {
       console.error('Failed to refresh images:', err);
     }
+  };
+
+  const handleEditImage = (image: Image) => {
+    setEditingImage(image);
+    setShowEditDialog(true);
   };
 
   const handleDeleteImage = async (imageId: number) => {
@@ -226,6 +248,7 @@ export const Dashboard: React.FC = () => {
             <TabsTrigger value="hero-slides">Hero Slides</TabsTrigger>
             <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
+            <TabsTrigger value="social-media">Social Media</TabsTrigger>
             <TabsTrigger value="upload">Upload</TabsTrigger>
           </TabsList>
 
@@ -238,10 +261,11 @@ export const Dashboard: React.FC = () => {
               </Button>
             </div>
 
-            <ImageGrid 
-              images={images} 
+            <ImageGrid
+              images={images}
               isLoading={isLoading}
               onDelete={handleDeleteImage}
+              onEdit={handleEditImage}
             />
           </TabsContent>
 
@@ -440,6 +464,77 @@ export const Dashboard: React.FC = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="social-media" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Social Media Links</h2>
+              <Button onClick={() => {
+                setEditingSocialMedia(null);
+                setShowSocialMediaDialog(true);
+              }}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Social Media Link
+              </Button>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Social Media Links</CardTitle>
+                <CardDescription>
+                  Manage social media links displayed on your website
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {socialMediaLinks.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Tag className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <p className="text-gray-500">No social media links found. Add your first link!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {socialMediaLinks.map((link) => (
+                      <div key={link.id} className="border rounded-lg p-4 flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <span className="text-sm font-medium">{link.platform.charAt(0).toUpperCase()}</span>
+                          </div>
+                          <div>
+                            <h3 className="font-medium">{link.display_name}</h3>
+                            <p className="text-sm text-gray-600">{link.url}</p>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <Badge variant={link.is_active ? "default" : "secondary"}>
+                                {link.is_active ? "Active" : "Inactive"}
+                              </Badge>
+                              <span className="text-xs text-gray-500">Order: {link.sort_order}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEditingSocialMedia(link);
+                              setShowSocialMediaDialog(true);
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => console.log('Delete social media link:', link.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="settings" className="space-y-6">
             <Card>
               <CardHeader>
@@ -480,6 +575,17 @@ export const Dashboard: React.FC = () => {
         onUpload={handleImageUpload}
       />
 
+      {/* Edit Dialog */}
+      <ImageEditDialog
+        open={showEditDialog}
+        onOpenChange={(open) => {
+          setShowEditDialog(open);
+          if (!open) setEditingImage(null);
+        }}
+        onSuccess={loadImages}
+        image={editingImage}
+      />
+
       {/* Testimonial Dialog */}
       <TestimonialDialog
         open={showTestimonialDialog}
@@ -492,6 +598,17 @@ export const Dashboard: React.FC = () => {
         open={showHeroSlideDialog}
         onOpenChange={setShowHeroSlideDialog}
         onSuccess={loadHeroSlides}
+      />
+
+      {/* Social Media Dialog */}
+      <SocialMediaDialog
+        open={showSocialMediaDialog}
+        onOpenChange={(open) => {
+          setShowSocialMediaDialog(open);
+          if (!open) setEditingSocialMedia(null);
+        }}
+        onSuccess={loadSocialMediaLinks}
+        socialMedia={editingSocialMedia}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 // Application constants
-export const APP_NAME = "Cheriyan Nooranal Photography";
+export const APP_NAME = "Photography by Cheriyan";
 export const APP_DESCRIPTION = "Professional photography services specializing in fashion, weddings, portraits, and product photography";
 
 export const CONTACT_INFO = {

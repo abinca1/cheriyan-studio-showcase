@@ -5,6 +5,7 @@ import { Button } from "@/shared/components/ui/button";
 import Navigation from "@/shared/components/layout/Navigation";
 import HeroSlideshow from "@/shared/components/common/HeroSlideshow";
 import { apiService, type Testimonial } from "@/shared/services/api";
+import SocialMediaLinks from "@/shared/components/common/SocialMediaLinks";
 import fashionImage from "@/assets/gallery-fashion-1.jpg";
 import weddingImage from "@/assets/gallery-wedding-1.jpg";
 import portraitImage from "@/assets/gallery-portrait-1.jpg";
@@ -231,9 +232,19 @@ const HomePage = () => {
       {/* Footer */}
       <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-border">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center">
+          <div className="text-center space-y-6">
+            {/* Social Media Links */}
+            <div className="flex justify-center">
+              <SocialMediaLinks
+                className="justify-center"
+                iconSize={24}
+                showLabels={false}
+              />
+            </div>
+
+            {/* Copyright */}
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Photograph By Cheriyan. All rights reserved.
+              © {new Date().getFullYear()} Photography By Cheriyan. All rights reserved.
             </p>
           </div>
         </div>

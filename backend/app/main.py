@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
-from app.routers import auth, images, categories, testimonials, hero_slides
+from app.routers import auth, images, categories, testimonials, hero_slides, social_media
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -29,6 +29,7 @@ app.include_router(images.router, prefix="/api/images", tags=["images"])
 app.include_router(categories.router, prefix="/api/categories", tags=["categories"])
 app.include_router(testimonials.router, prefix="/api/testimonials", tags=["testimonials"])
 app.include_router(hero_slides.router, prefix="/api/hero-slides", tags=["hero-slides"])
+app.include_router(social_media.router, prefix="/api/social-media", tags=["social-media"])
 
 @app.get("/")
 async def root():

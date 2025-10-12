@@ -63,7 +63,15 @@ class ImageService:
         
         # Save file
         file_path = await save_upload_file(file, unique_filename)
-        
+
+        # Get category name if category_id is provided
+        category_name = image_data.category
+        if image_data.category_id and not category_name:
+            from app.models.category import Category
+            category = self.db.query(Category).filter(Category.id == image_data.category_id).first()
+            if category:
+                category_name = category.name
+
         # Create database record
         db_image = Image(
             title=image_data.title,
@@ -72,7 +80,7 @@ class ImageService:
             file_path=file_path,
             file_size=file.size,
             mime_type=file.content_type,
-            category=image_data.category,
+            category=category_name,
             tags=image_data.tags,
             is_featured=image_data.is_featured,
             is_public=image_data.is_public,
@@ -105,7 +113,16 @@ class ImageService:
         update_data = image_data.dict(exclude_unset=True)
         for field, value in update_data.items():
             setattr(image, field, value)
-        
+
+        # Update category name if category_id changed
+        if 'category_id' in update_data and update_data['category_id']:
+            from app.models.category import Category
+            category = self.db.query(Category).filter(Category.id == update_data['category_id']).first()
+            if category:
+                image.category = category.name
+        elif 'category_id' in update_data and update_data['category_id'] is None:
+            image.category = None
+
         self.db.commit()
         self.db.refresh(image)
         return image

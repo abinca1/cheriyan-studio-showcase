@@ -4,6 +4,7 @@ import { Mail, Phone, MapPin, Send } from "lucide-react";
 import { Button, Input, Textarea } from "@/shared/components/ui";
 import { useToast } from "@/shared/hooks";
 import { z } from "zod";
+import SocialMediaLinks from "@/shared/components/common/SocialMediaLinks";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
@@ -255,14 +256,24 @@ const ContactPage = () => {
 
       {/* Footer */}
       <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-border">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center">
-            <p className="font-body text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Cheriyan Nooranal Photography. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+              <div className="container mx-auto max-w-6xl">
+                <div className="text-center space-y-6">
+                  {/* Social Media Links */}
+                  <div className="flex justify-center">
+                    <SocialMediaLinks
+                      className="justify-center"
+                      iconSize={24}
+                      showLabels={false}
+                    />
+                  </div>
+      
+                  {/* Copyright */}
+                  <p className="font-body text-sm text-muted-foreground">
+                    © {new Date().getFullYear()} Photography by Cheriyan. All rights reserved.
+                  </p>
+                </div>
+              </div>
+            </footer>
     </div>
   );
 };

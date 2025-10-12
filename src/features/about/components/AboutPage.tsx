@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Navigation } from "@/shared/components";
 import { Camera, Award, Users, Heart, Star } from "lucide-react";
 import { apiService, type Testimonial } from "@/shared/services/api";
+import SocialMediaLinks from "@/shared/components/common/SocialMediaLinks";
 import photographerPortrait from "@/assets/photographer-portrait.jpg";
 
 const AboutPage = () => {
@@ -9,10 +10,10 @@ const AboutPage = () => {
   const [loading, setLoading] = useState(true);
 
   const stats = [
-    { icon: Camera, value: "10+", label: "Years Experience" },
-    { icon: Award, value: "50+", label: "Awards Won" },
-    { icon: Users, value: "500+", label: "Happy Clients" },
-    { icon: Heart, value: "1000+", label: "Projects Completed" },
+    { icon: Camera, value: "5+", label: "Years Experience" },
+    // { icon: Award, value: "50+", label: "Awards Won" },
+    { icon: Users, value: "100+", label: "Happy Clients" },
+    { icon: Heart, value: "100+", label: "Projects Completed" },
   ];
 
   useEffect(() => {
@@ -56,7 +57,7 @@ const AboutPage = () => {
               <div className="aspect-[3/4] overflow-hidden rounded-sm">
                 <img
                   src={photographerPortrait}
-                  alt="Cheriyan Nooranal"
+                  alt="Cheriyan Simon"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -64,11 +65,11 @@ const AboutPage = () => {
 
             <div className="space-y-6 animate-fade-in">
               <h2 className="font-display text-4xl font-bold">
-                Hello, I'm Cheriyan Nooranal
+                Hello, I'm Cheriyan Simon
               </h2>
               <div className="space-y-4 font-body text-muted-foreground leading-relaxed">
                 <p>
-                  With over a decade of experience in professional photography, I've had the
+                  With over five years of experience in professional photography, I've had the
                   privilege of capturing countless precious moments and creating lasting memories
                   for my clients.
                 </p>
@@ -81,7 +82,8 @@ const AboutPage = () => {
                   I believe that great photography is about more than just technical skill—it's
                   about understanding people, emotions, and the stories that deserve to be told.
                   Every photograph I take is crafted with care, attention to detail, and a
-                  commitment to excellence.
+                  commitment to excellence. I'm dedicated to capturing life's most beautiful
+                  moments and creating memories that last a lifetime.
                 </p>
                 <p>
                   When I'm not behind the camera, you'll find me exploring new techniques,
@@ -105,6 +107,23 @@ const AboutPage = () => {
                 <div className="font-body text-sm text-muted-foreground">{stat.label}</div>
               </div>
             ))}
+          </div>
+
+          {/* Social Media Section */}
+          <div className="text-center mb-24">
+            <h2 className="font-display text-3xl font-bold mb-8">
+              Connect With Me
+            </h2>
+            <p className="font-body text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Follow my work and stay updated with the latest projects and behind-the-scenes content
+            </p>
+            <div className="flex justify-center">
+              <SocialMediaLinks
+                className="justify-center"
+                iconSize={28}
+                showLabels={true}
+              />
+            </div>
           </div>
 
           {/* Testimonials Section */}
@@ -158,14 +177,24 @@ const AboutPage = () => {
 
       {/* Footer */}
       <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-border">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center">
-            <p className="font-body text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Cheriyan Nooranal Photography. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+              <div className="container mx-auto max-w-6xl">
+                <div className="text-center space-y-6">
+                  {/* Social Media Links */}
+                  <div className="flex justify-center">
+                    <SocialMediaLinks
+                      className="justify-center"
+                      iconSize={24}
+                      showLabels={false}
+                    />
+                  </div>
+      
+                  {/* Copyright */}
+                  <p className="font-body text-sm text-muted-foreground">
+                    © {new Date().getFullYear()} Photography by Cheriyan. All rights reserved.
+                  </p>
+                </div>
+              </div>
+            </footer>
     </div>
   );
 };

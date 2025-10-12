@@ -3,6 +3,7 @@ import { Navigation } from "@/shared/components";
 import { X } from "lucide-react";
 import { Button } from "@/shared/components/ui";
 import { apiService, type Image, type Category as ApiCategory } from "@/shared/services/api";
+import SocialMediaLinks from "@/shared/components/common/SocialMediaLinks";
 
 import type { Category, GalleryImage } from "../types";
 
@@ -33,14 +34,16 @@ const GalleryPage = () => {
     }
   };
 
-  // Convert API categories to gallery categories
-  const galleryCategories: Category[] = ["All", ...categories.map(cat => cat.name as Category)];
+  // Convert API categories to gallery categories and add categories from images
+  const imageCategories = [...new Set(images.map(img => img.category).filter(Boolean))];
+  const allCategories = [...new Set([...categories.map(cat => cat.name), ...imageCategories])];
+  const galleryCategories: Category[] = ["All", ...allCategories];
 
   // Convert API images to gallery images and filter
   const galleryImages: GalleryImage[] = images.map(img => ({
     id: img.id,
     src: `http://localhost:8000/static/images/${img.filename}`,
-    category: img.category_obj?.name || "Uncategorized",
+    category: img.category || "Uncategorized",
     title: img.title
   }));
 
@@ -161,9 +164,19 @@ const GalleryPage = () => {
       {/* Footer */}
       <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-border">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center">
+          <div className="text-center space-y-6">
+            {/* Social Media Links */}
+            <div className="flex justify-center">
+              <SocialMediaLinks
+                className="justify-center"
+                iconSize={24}
+                showLabels={false}
+              />
+            </div>
+
+            {/* Copyright */}
             <p className="font-body text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Cheriyan Nooranal Photography. All rights reserved.
+              © {new Date().getFullYear()} Photography by Cheriyan. All rights reserved.
             </p>
           </div>
         </div>

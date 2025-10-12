@@ -1,5 +1,5 @@
 // Gallery feature types
-export type Category = "All" | "Fashion" | "Wedding" | "Portrait" | "Product";
+export type Category = string; // Allow any category name from the API
 
 export interface GalleryImage {
   id: number;

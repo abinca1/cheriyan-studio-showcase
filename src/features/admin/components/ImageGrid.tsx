@@ -24,12 +24,14 @@ interface ImageGridProps {
   images: Image[];
   isLoading: boolean;
   onDelete: (imageId: number) => void;
+  onEdit: (image: Image) => void;
 }
 
-export const ImageGrid: React.FC<ImageGridProps> = ({ 
-  images, 
-  isLoading, 
-  onDelete 
+export const ImageGrid: React.FC<ImageGridProps> = ({
+  images,
+  isLoading,
+  onDelete,
+  onEdit
 }) => {
   if (isLoading) {
     return (
@@ -100,7 +102,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEdit(image)}>
                       <Edit className="h-4 w-4 mr-2" />
                       Edit
                     </DropdownMenuItem>

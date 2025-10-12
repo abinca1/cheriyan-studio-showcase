@@ -81,6 +81,18 @@ export interface HeroSlide {
   updated_at?: string;
 }
 
+export interface SocialMedia {
+  id: number;
+  platform: string;
+  url: string;
+  icon_name: string;
+  display_name: string;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at?: string;
+}
+
 export interface ApiError {
   detail: string;
 }
@@ -284,6 +296,24 @@ class ApiService {
     });
   }
 
+  async updateImage(imageId: number, metadata: {
+    title?: string;
+    description?: string;
+    tags?: string;
+    category_id?: number | null;
+    is_featured?: boolean;
+    is_public?: boolean;
+    is_hero_image?: boolean;
+  }): Promise<Image> {
+    return this.request<Image>(`/api/images/${imageId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(metadata),
+    });
+  }
+
   // Categories API
   async getCategories(): Promise<Category[]> {
     return this.request<Category[]>('/api/categories/');
@@ -359,6 +389,37 @@ class ApiService {
 
   async deleteHeroSlide(id: number): Promise<void> {
     return this.request<void>(`/api/hero-slides/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Social Media API
+  async getSocialMediaLinks(activeOnly: boolean = true): Promise<SocialMedia[]> {
+    return this.request<SocialMedia[]>(`/api/social-media/?active_only=${activeOnly}`);
+  }
+
+  async createSocialMediaLink(socialMedia: Omit<SocialMedia, 'id' | 'created_at' | 'updated_at'>): Promise<SocialMedia> {
+    return this.request<SocialMedia>('/api/social-media/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(socialMedia),
+    });
+  }
+
+  async updateSocialMediaLink(id: number, socialMedia: Partial<Omit<SocialMedia, 'id' | 'created_at' | 'updated_at'>>): Promise<SocialMedia> {
+    return this.request<SocialMedia>(`/api/social-media/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(socialMedia),
+    });
+  }
+
+  async deleteSocialMediaLink(id: number): Promise<void> {
+    return this.request<void>(`/api/social-media/${id}`, {
       method: 'DELETE',
     });
   }
