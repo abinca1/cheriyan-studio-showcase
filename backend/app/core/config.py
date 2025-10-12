@@ -33,19 +33,26 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
     # CORS
-    ALLOWED_HOSTS: List[str] = os.getenv(
-        "ALLOWED_HOSTS",
-        "http://localhost:3000,http://localhost:5173,http://localhost:8081,http://127.0.0.1:3000,http://127.0.0.1:8081"
-    ).split(",")
     ALLOW_CORS: bool = os.getenv("ALLOW_CORS", "true").lower() == "true"
+
+    @property
+    def ALLOWED_HOSTS(self) -> List[str]:
+        """Get allowed hosts from environment variable"""
+        hosts_str = os.getenv(
+            "ALLOWED_HOSTS",
+            "http://localhost:3000,http://localhost:5173,http://localhost:8081,http://127.0.0.1:3000,http://127.0.0.1:8081"
+        )
+        return [host.strip() for host in hosts_str.split(",")]
 
     # File Upload
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "app/static/images")
     MAX_FILE_SIZE: int = int(os.getenv("MAX_FILE_SIZE", str(10 * 1024 * 1024)))  # 10MB
-    ALLOWED_EXTENSIONS: List[str] = os.getenv(
-        "ALLOWED_EXTENSIONS",
-        ".jpg,.jpeg,.png,.gif,.webp"
-    ).split(",")
+
+    @property
+    def ALLOWED_EXTENSIONS(self) -> List[str]:
+        """Get allowed file extensions from environment variable"""
+        extensions_str = os.getenv("ALLOWED_EXTENSIONS", ".jpg,.jpeg,.png,.gif,.webp")
+        return [ext.strip() for ext in extensions_str.split(",")]
 
     # Server
     HOST: str = os.getenv("HOST", "0.0.0.0")
