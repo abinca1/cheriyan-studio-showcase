@@ -25,7 +25,7 @@ class UserInDBBase(UserBase):
     updated_at: Optional[datetime] = None
     
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 class User(UserInDBBase):
     pass
