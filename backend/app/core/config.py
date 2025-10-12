@@ -1,6 +1,19 @@
 import os
 from typing import List
-from pydantic import BaseSettings
+
+try:
+    # Try Pydantic v2 first (newer versions)
+    from pydantic_settings import BaseSettings
+except ImportError:
+    try:
+        # Fallback to Pydantic v1
+        from pydantic import BaseSettings
+    except ImportError:
+        # Last resort - create a basic settings class
+        class BaseSettings:
+            def __init__(self, **kwargs):
+                for key, value in kwargs.items():
+                    setattr(self, key, value)
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Cheriyan Studio Showcase"
