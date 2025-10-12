@@ -3,9 +3,7 @@ services:
     name: cheriyan-studio-api
     env: python
     plan: free
-    buildCommand: |
-      pip install -r requirements.txt
-      python init_db.py
+    buildCommand: pip install -r requirements.txt
     startCommand: python start.py
     healthCheckPath: /docs
     envVars:

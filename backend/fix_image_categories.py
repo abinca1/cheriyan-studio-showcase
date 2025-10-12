@@ -3,12 +3,16 @@
 Script to fix existing images by populating the category field based on category_id
 """
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+from app.core.config import settings
 
-# Use the correct database file
-DATABASE_URL = "sqlite:///./cheriyan_studio.db"
-engine = create_engine(DATABASE_URL)
+# Use the database URL from settings
+engine = create_engine(settings.DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def fix_image_categories():
