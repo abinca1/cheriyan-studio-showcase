@@ -1,26 +1,56 @@
-# Welcome to your Lovable project
+# 📸 Cheriyan Studio Showcase
 
-## Project info
+A professional photography portfolio website with admin dashboard, built with React, TypeScript, and FastAPI.
 
-**URL**: https://lovable.dev/projects/f6a3fc50-44d7-44a7-bf04-51873e423385
+## ✨ Features
 
-## How can I edit this code?
+### 🎨 Frontend
+- **Modern React/TypeScript** with Vite
+- **Responsive Design** with Tailwind CSS
+- **Professional Gallery** with category filtering and lightbox
+- **Hero Slideshow** with dynamic content
+- **Testimonials System** with star ratings
+- **Social Media Integration** with custom icons
+- **Admin Dashboard** for content management
 
-There are several ways of editing your application.
+### 🔧 Backend
+- **FastAPI** with Python 3.11+
+- **JWT Authentication** with refresh tokens
+- **Image Upload & Management** with category system
+- **RESTful API** with automatic documentation
+- **SQLite Database** (production-ready for PostgreSQL/MySQL)
+- **Admin Panel** for content management
 
-**Use Lovable**
+### 🚀 Production Ready
+- **Docker Support** with multi-stage builds
+- **Nginx Configuration** with SSL support
+- **Environment Management** for dev/prod
+- **Security Headers** and rate limiting
+- **Health Checks** and monitoring
+- **Automated Deployment** scripts
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/f6a3fc50-44d7-44a7-bf04-51873e423385) and start prompting.
+## 🏃‍♂️ Quick Start
 
-Changes made via Lovable will be committed automatically to this repo.
+### Development
+```bash
+# Clone and start development servers
+git clone <repository-url>
+cd cheriyan-studio-showcase
+./scripts/deploy.sh development
+```
 
-**Use your preferred IDE**
+### Production
+```bash
+# Deploy to production
+./scripts/deploy.sh production
+```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 📚 Documentation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **[Deployment Guide](DEPLOYMENT.md)** - Complete production deployment instructions
+- **[API Documentation](http://localhost:8000/docs)** - Interactive API docs (when running)
 
-Follow these steps:
+## 🛠️ Development Setup
 
 ```sh
 # Step 1: Clone the repository using the project's Git URL.

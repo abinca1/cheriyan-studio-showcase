@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Navigation } from "@/shared/components";
-import { X } from "lucide-react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/shared/components/ui";
 import { apiService, type Image, type Category as ApiCategory } from "@/shared/services/api";
 import SocialMediaLinks from "@/shared/components/common/SocialMediaLinks";
@@ -51,6 +51,41 @@ const GalleryPage = () => {
     selectedCategory === "All"
       ? galleryImages
       : galleryImages.filter((img) => img.category === selectedCategory);
+
+  // Navigation functions for lightbox
+  const currentImageIndex = selectedImage
+    ? filteredImages.findIndex(img => img.id === selectedImage.id)
+    : -1;
+
+  const goToPrevious = () => {
+    if (currentImageIndex > 0) {
+      setSelectedImage(filteredImages[currentImageIndex - 1]);
+    }
+  };
+
+  const goToNext = () => {
+    if (currentImageIndex < filteredImages.length - 1) {
+      setSelectedImage(filteredImages[currentImageIndex + 1]);
+    }
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (!selectedImage) return;
+
+      if (e.key === 'ArrowLeft') {
+        goToPrevious();
+      } else if (e.key === 'ArrowRight') {
+        goToNext();
+      } else if (e.key === 'Escape') {
+        setSelectedImage(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [selectedImage, currentImageIndex]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -132,14 +167,45 @@ const GalleryPage = () => {
           className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 animate-fade-in"
           onClick={() => setSelectedImage(null)}
         >
+          {/* Close Button */}
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-4 right-4 text-white hover:bg-white/10"
+            className="absolute top-4 right-4 text-white hover:bg-white/10 z-10"
             onClick={() => setSelectedImage(null)}
           >
             <X className="h-6 w-6" />
           </Button>
+
+          {/* Previous Button */}
+          {currentImageIndex > 0 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/10 z-10"
+              onClick={(e) => {
+                e.stopPropagation();
+                goToPrevious();
+              }}
+            >
+              <ChevronLeft className="h-8 w-8" />
+            </Button>
+          )}
+
+          {/* Next Button */}
+          {currentImageIndex < filteredImages.length - 1 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/10 z-10"
+              onClick={(e) => {
+                e.stopPropagation();
+                goToNext();
+              }}
+            >
+              <ChevronRight className="h-8 w-8" />
+            </Button>
+          )}
 
           <div className="max-w-6xl max-h-[90vh] flex items-center justify-center">
             <img
@@ -150,12 +216,16 @@ const GalleryPage = () => {
             />
           </div>
 
+          {/* Image Info */}
           <div className="absolute bottom-4 left-0 right-0 text-center text-white">
             <p className="font-body text-lg font-medium mb-1">
               {selectedImage.title}
             </p>
-            <p className="font-body text-sm text-white/70">
+            <p className="font-body text-sm text-white/70 mb-2">
               {selectedImage.category}
+            </p>
+            <p className="font-body text-xs text-white/50">
+              {currentImageIndex + 1} of {filteredImages.length}
             </p>
           </div>
         </div>

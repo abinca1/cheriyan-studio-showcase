@@ -11,12 +11,12 @@ app = FastAPI(
     description="Cheriyan Studio Showcase API"
 )
 
-# Set up CORS - Allow all origins for development
+# Set up CORS - Production-ready configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
