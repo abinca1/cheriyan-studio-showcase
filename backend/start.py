@@ -14,33 +14,45 @@ def initialize_database():
         print("🔧 Checking database initialization...")
 
         # Import here to avoid circular imports
-        from sqlalchemy import create_engine, text
+        from sqlalchemy import create_engine, text, inspect
         from app.db.base import Base
 
         engine = create_engine(settings.DATABASE_URL)
 
         # Create tables if they don't exist
         Base.metadata.create_all(bind=engine)
-        print("✅ Database tables verified")
+        print("✅ Database tables created")
 
-        # Check if admin user exists
-        with engine.connect() as conn:
-            result = conn.execute(text("SELECT COUNT(*) FROM users WHERE is_admin = true"))
-            admin_count = result.scalar()
+        # Verify tables exist
+        inspector = inspect(engine)
+        tables = inspector.get_table_names()
+        print(f"📋 Available tables: {tables}")
 
-            if admin_count == 0:
-                print("🔧 Creating admin user...")
+        # Check if users table exists and has admin user
+        if 'users' in tables:
+            with engine.connect() as conn:
                 try:
-                    from init_db import run_script
-                    run_script("create_admin", "Creating admin user")
-                    run_script("add_images", "Adding sample images")
-                    run_script("fix_categories", "Fixing image categories")
-                    run_script("add_social_media", "Setting up social media links")
+                    result = conn.execute(text("SELECT COUNT(*) FROM users WHERE is_admin = true"))
+                    admin_count = result.scalar()
+
+                    if admin_count == 0:
+                        print("🔧 No admin user found, creating one...")
+                        # Create admin user directly
+                        from app.core.security import get_password_hash
+                        hashed_password = get_password_hash("admin123")
+
+                        conn.execute(text("""
+                            INSERT INTO users (username, email, hashed_password, is_admin, created_at, updated_at)
+                            VALUES ('admin', 'admin@cheriyanstudio.com', :password, true, datetime('now'), datetime('now'))
+                        """), {"password": hashed_password})
+                        conn.commit()
+                        print("✅ Admin user created (username: admin, password: admin123)")
+                    else:
+                        print("✅ Admin user exists")
                 except Exception as e:
-                    print(f"⚠️  Database initialization warning: {e}")
-                    print("📝 You may need to create admin user manually")
-            else:
-                print("✅ Admin user exists")
+                    print(f"⚠️  Admin user check failed: {e}")
+        else:
+            print("⚠️  Users table not found")
 
     except Exception as e:
         print(f"⚠️  Database initialization error: {e}")
