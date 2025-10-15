@@ -7,10 +7,11 @@ from app.schemas.image import Image, ImageCreate, ImageUpdate
 from app.schemas.user import User
 from app.services.auth_service import AuthService
 from app.services.image_service import ImageService
+from app.utils.api_response import ok, created
 
 router = APIRouter()
 
-@router.get("/", response_model=List[Image])
+@router.get("/")
 async def get_images(
     skip: int = 0,
     limit: int = 100,
@@ -20,15 +21,16 @@ async def get_images(
 ):
     """Get all public images with optional filtering"""
     image_service = ImageService(db)
-    return await image_service.get_images(
+    images = await image_service.get_images(
         skip=skip, 
         limit=limit, 
         category=category, 
         is_featured=is_featured,
         public_only=True
     )
+    return ok(images, message="Images retrieved.")
 
-@router.get("/my-images", response_model=List[Image])
+@router.get("/my-images")
 async def get_my_images(
     skip: int = 0,
     limit: int = 100,
@@ -37,18 +39,20 @@ async def get_my_images(
 ):
     """Get current user's images"""
     image_service = ImageService(db)
-    return await image_service.get_user_images(current_user.id, skip=skip, limit=limit)
+    images = await image_service.get_user_images(current_user.id, skip=skip, limit=limit)
+    return ok(images, message="Your images retrieved.")
 
-@router.get("/{image_id}", response_model=Image)
+@router.get("/{image_id}")
 async def get_image(
     image_id: int,
     db: Session = Depends(get_db)
 ):
     """Get a specific image by ID"""
     image_service = ImageService(db)
-    return await image_service.get_image(image_id)
+    image = await image_service.get_image(image_id)
+    return ok(image, message="Image details retrieved.")
 
-@router.post("/", response_model=Image)
+@router.post("/")
 async def upload_image(
     file: UploadFile = File(...),
     title: str = Form(...),
@@ -74,9 +78,10 @@ async def upload_image(
         is_hero_image=is_hero_image,
         category_id=category_id
     )
-    return await image_service.create_image(image_data, file, current_user.id)
+    image = await image_service.create_image(image_data, file, current_user.id)
+    return created(image, message="Image uploaded.")
 
-@router.put("/{image_id}", response_model=Image)
+@router.put("/{image_id}")
 async def update_image(
     image_id: int,
     image_data: ImageUpdate,
@@ -85,7 +90,8 @@ async def update_image(
 ):
     """Update an image"""
     image_service = ImageService(db)
-    return await image_service.update_image(image_id, image_data, current_user.id)
+    image = await image_service.update_image(image_id, image_data, current_user.id)
+    return ok(image, message="Image updated.")
 
 @router.delete("/{image_id}")
 async def delete_image(
@@ -96,4 +102,4 @@ async def delete_image(
     """Delete an image"""
     image_service = ImageService(db)
     await image_service.delete_image(image_id, current_user.id)
-    return {"message": "Image deleted successfully"}
+    return ok(message="Image deleted.")

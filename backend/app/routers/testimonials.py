@@ -7,10 +7,11 @@ from app.models.testimonial import Testimonial
 from app.schemas.testimonial import Testimonial as TestimonialSchema, TestimonialCreate, TestimonialUpdate
 from app.services.auth_service import get_current_admin_user
 from app.models.user import User
+from app.utils.api_response import ok, created
 
 router = APIRouter()
 
-@router.get("/", response_model=List[TestimonialSchema])
+@router.get("/")
 def get_testimonials(
     skip: int = 0,
     limit: int = 100,
@@ -23,9 +24,9 @@ def get_testimonials(
         query = query.filter(Testimonial.is_active == True)
     
     testimonials = query.order_by(Testimonial.sort_order, Testimonial.created_at.desc()).offset(skip).limit(limit).all()
-    return testimonials
+    return ok(testimonials, message="Testimonials retrieved.")
 
-@router.get("/featured", response_model=List[TestimonialSchema])
+@router.get("/featured")
 def get_featured_testimonials(
     limit: int = 6,
     db: Session = Depends(get_db)
@@ -35,9 +36,9 @@ def get_featured_testimonials(
         Testimonial.is_active == True,
         Testimonial.is_featured == True
     ).order_by(Testimonial.sort_order, Testimonial.created_at.desc()).limit(limit).all()
-    return testimonials
+    return ok(testimonials, message="Featured testimonials retrieved.")
 
-@router.get("/{testimonial_id}", response_model=TestimonialSchema)
+@router.get("/{testimonial_id}")
 def get_testimonial(
     testimonial_id: int,
     db: Session = Depends(get_db)
@@ -46,9 +47,9 @@ def get_testimonial(
     testimonial = db.query(Testimonial).filter(Testimonial.id == testimonial_id).first()
     if not testimonial:
         raise HTTPException(status_code=404, detail="Testimonial not found")
-    return testimonial
+    return ok(testimonial, message="Testimonial details retrieved.")
 
-@router.post("/", response_model=TestimonialSchema)
+@router.post("/")
 def create_testimonial(
     testimonial: TestimonialCreate,
     db: Session = Depends(get_db),
@@ -59,9 +60,9 @@ def create_testimonial(
     db.add(db_testimonial)
     db.commit()
     db.refresh(db_testimonial)
-    return db_testimonial
+    return created(db_testimonial, message="Testimonial created.")
 
-@router.put("/{testimonial_id}", response_model=TestimonialSchema)
+@router.put("/{testimonial_id}")
 def update_testimonial(
     testimonial_id: int,
     testimonial: TestimonialUpdate,
@@ -79,7 +80,7 @@ def update_testimonial(
 
     db.commit()
     db.refresh(db_testimonial)
-    return db_testimonial
+    return ok(db_testimonial, message="Testimonial updated.")
 
 @router.delete("/{testimonial_id}")
 def delete_testimonial(
@@ -94,4 +95,4 @@ def delete_testimonial(
     
     db.delete(db_testimonial)
     db.commit()
-    return {"message": "Testimonial deleted successfully"}
+    return ok(message="Testimonial deleted.")

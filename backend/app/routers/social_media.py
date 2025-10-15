@@ -7,10 +7,11 @@ from app.models.social_media import SocialMedia
 from app.schemas.social_media import SocialMedia as SocialMediaSchema, SocialMediaCreate, SocialMediaUpdate
 from app.services.auth_service import get_current_admin_user
 from app.models.user import User
+from app.utils.api_response import ok, created
 
 router = APIRouter()
 
-@router.get("/", response_model=List[SocialMediaSchema])
+@router.get("/")
 def get_social_media_links(
     active_only: bool = True,
     db: Session = Depends(get_db)
@@ -20,9 +21,10 @@ def get_social_media_links(
     if active_only:
         query = query.filter(SocialMedia.is_active == True)
     
-    return query.order_by(SocialMedia.sort_order).all()
+    links = query.order_by(SocialMedia.sort_order).all()
+    return ok(links, message="Social media links retrieved.")
 
-@router.get("/{social_media_id}", response_model=SocialMediaSchema)
+@router.get("/{social_media_id}")
 def get_social_media_link(
     social_media_id: int,
     db: Session = Depends(get_db)
@@ -34,9 +36,9 @@ def get_social_media_link(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Social media link not found"
         )
-    return social_media
+    return ok(social_media, message="Social media link details retrieved.")
 
-@router.post("/", response_model=SocialMediaSchema)
+@router.post("/")
 def create_social_media_link(
     social_media: SocialMediaCreate,
     db: Session = Depends(get_db),
@@ -47,9 +49,9 @@ def create_social_media_link(
     db.add(db_social_media)
     db.commit()
     db.refresh(db_social_media)
-    return db_social_media
+    return created(db_social_media, message="Social media link created.")
 
-@router.put("/{social_media_id}", response_model=SocialMediaSchema)
+@router.put("/{social_media_id}")
 def update_social_media_link(
     social_media_id: int,
     social_media_update: SocialMediaUpdate,
@@ -70,7 +72,7 @@ def update_social_media_link(
     
     db.commit()
     db.refresh(db_social_media)
-    return db_social_media
+    return ok(db_social_media, message="Social media link updated.")
 
 @router.delete("/{social_media_id}")
 def delete_social_media_link(
@@ -88,4 +90,4 @@ def delete_social_media_link(
     
     db.delete(db_social_media)
     db.commit()
-    return {"message": "Social media link deleted successfully"}
+    return ok(message="Social media link deleted.")

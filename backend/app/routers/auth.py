@@ -10,35 +10,40 @@ from app.db.session import get_db
 from app.schemas.auth import Token, LoginRequest, RefreshTokenRequest, PasswordChangeRequest
 from app.schemas.user import User, UserCreate
 from app.services.auth_service import AuthService
+from app.utils.api_response import ok, created, error_response
 
 router = APIRouter()
 
-@router.post("/register", response_model=User)
+@router.post("/register")
 async def register(
     user_data: UserCreate,
     db: Session = Depends(get_db)
 ):
     """Register a new user"""
     auth_service = AuthService(db)
-    return await auth_service.register_user(user_data)
+    user = await auth_service.register_user(user_data)
+    # Return sanitized schema and a readable message
+    return created(User.from_orm(user), message=f"User account created for {user.username}.")
 
-@router.post("/login", response_model=Token)
+@router.post("/login")
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Session = Depends(get_db)
 ):
     """Login user and return access and refresh tokens"""
     auth_service = AuthService(db)
-    return await auth_service.login_user(form_data.username, form_data.password)
+    token = await auth_service.login_user(form_data.username, form_data.password)
+    return ok(token, message="Authentication successful.")
 
-@router.post("/refresh", response_model=Token)
+@router.post("/refresh")
 async def refresh_token(
     refresh_data: RefreshTokenRequest,
     db: Session = Depends(get_db)
 ):
     """Refresh access token using refresh token"""
     auth_service = AuthService(db)
-    return await auth_service.refresh_access_token(refresh_data.refresh_token)
+    token = await auth_service.refresh_access_token(refresh_data.refresh_token)
+    return ok(token, message="Access token refreshed.")
 
 @router.post("/logout")
 async def logout(
@@ -48,15 +53,15 @@ async def logout(
     """Logout user by revoking refresh token"""
     auth_service = AuthService(db)
     await auth_service.logout_user(refresh_data.refresh_token)
-    return {"message": "Successfully logged out"}
+    return ok(message="Signed out and refresh token revoked.")
 
-@router.get("/me", response_model=User)
+@router.get("/me")
 async def get_current_user(
     current_user: User = Depends(AuthService.get_current_user),
     db: Session = Depends(get_db)
 ):
     """Get current user information"""
-    return current_user
+    return ok(current_user, message="Authenticated user profile retrieved.")
 
 @router.post("/change-password")
 async def change_password(
@@ -71,4 +76,4 @@ async def change_password(
         password_data.current_password, 
         password_data.new_password
     )
-    return {"message": "Password changed successfully"}
+    return ok(message="Password updated.")
