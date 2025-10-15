@@ -38,7 +38,7 @@ def initialize_database():
                     if admin_count == 0:
                         print("🔧 No admin user found, creating one...")
                         # Create admin user directly
-                        from app.core.security import get_password_hash
+                        from app.utils.security import get_password_hash
                         hashed_password = get_password_hash("admin123")
 
                         conn.execute(text("""
