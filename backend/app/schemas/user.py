@@ -32,3 +32,7 @@ class User(UserInDBBase):
 
 class UserInDB(UserInDBBase):
     hashed_password: str
+
+class UserOut(UserInDBBase):
+    class Config:
+        orm_mode = True
