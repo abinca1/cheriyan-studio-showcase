@@ -80,7 +80,8 @@ class AuthService:
             username=user_data.username,
             full_name=user_data.full_name,
             hashed_password=hashed_password,
-            is_active=user_data.is_active
+            is_active=user_data.is_active,
+            is_admin=user_data.is_admin
         )
         self.db.add(db_user)
         self.db.commit()
