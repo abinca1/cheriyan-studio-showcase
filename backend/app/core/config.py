@@ -40,7 +40,7 @@ class Settings(BaseSettings):
         """Get allowed hosts from environment variable"""
         hosts_str = os.getenv(
             "ALLOWED_HOSTS",
-            "http://localhost:3000,http://localhost:5173,http://localhost:8081,http://127.0.0.1:3000,http://127.0.0.1:8081,http://10.252.103.200:8081/"
+            "http://localhost:3000,http://localhost:5173,http://localhost:8081,http://127.0.0.1:3000,http://127.0.0.1:8081,http://10.252.103.200:8081/,https://cheriyan-studio-frontend.onrender.com"
         )
         return [host.strip() for host in hosts_str.split(",")]
 

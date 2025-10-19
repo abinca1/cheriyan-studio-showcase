@@ -1,10 +1,12 @@
 from typing import Optional
 from pydantic import BaseModel
+from app.schemas.user import UserOut
 
 class Token(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    user: Optional[UserOut] = None
 
 class TokenData(BaseModel):
     username: Optional[str] = None

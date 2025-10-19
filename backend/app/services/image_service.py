@@ -19,6 +19,7 @@ class ImageService:
         limit: int = 100, 
         category: Optional[str] = None,
         is_featured: Optional[bool] = None,
+        is_thumbnail: Optional[bool] = None,  # new filter
         public_only: bool = True
     ) -> List[Image]:
         query = self.db.query(Image)
@@ -31,6 +32,9 @@ class ImageService:
         
         if is_featured is not None:
             query = query.filter(Image.is_featured == is_featured)
+
+        if is_thumbnail is not None:  # apply thumbnail filter
+            query = query.filter(Image.is_thumbnail == is_thumbnail)
         
         return query.offset(skip).limit(limit).all()
     
@@ -85,6 +89,7 @@ class ImageService:
             is_featured=image_data.is_featured,
             is_public=image_data.is_public,
             is_hero_image=image_data.is_hero_image,
+            is_thumbnail=image_data.is_thumbnail,  # include thumbnail flag
             category_id=image_data.category_id,
             owner_id=user_id
         )

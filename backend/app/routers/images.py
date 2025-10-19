@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File,
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.schemas.image import Image, ImageCreate, ImageUpdate
+from app.schemas.image import Image, ImageOut, ImageCreate, ImageUpdate
 from app.schemas.user import User
 from app.services.auth_service import AuthService
 from app.services.image_service import ImageService
@@ -17,6 +17,7 @@ async def get_images(
     limit: int = 100,
     category: Optional[str] = None,
     is_featured: Optional[bool] = None,
+    is_thumbnail: Optional[bool] = None,
     db: Session = Depends(get_db)
 ):
     """Get all public images with optional filtering"""
@@ -26,9 +27,12 @@ async def get_images(
         limit=limit, 
         category=category, 
         is_featured=is_featured,
+        is_thumbnail=is_thumbnail,
         public_only=True
     )
-    return ok(images, message="Images retrieved.")
+    images_out = [ImageOut.from_orm(img) for img in images]
+
+    return ok(images_out, message="Images retrieved.")
 
 @router.get("/my-images")
 async def get_my_images(
@@ -50,7 +54,12 @@ async def get_image(
     """Get a specific image by ID"""
     image_service = ImageService(db)
     image = await image_service.get_image(image_id)
-    return ok(image, message="Image details retrieved.")
+    if not image:
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    # Convert to ImageOut schema (includes is_thumbnail)
+    from app.schemas.image import ImageOut
+    return ok(ImageOut.from_orm(image), message="Image details retrieved.")
 
 @router.post("/")
 async def upload_image(
@@ -62,6 +71,7 @@ async def upload_image(
     is_featured: bool = Form(False),
     is_public: bool = Form(True),
     is_hero_image: bool = Form(False),
+    is_thumbnail: bool = Form(False),
     category_id: Optional[int] = Form(None),
     current_user: User = Depends(AuthService.get_current_user),
     db: Session = Depends(get_db)
@@ -76,7 +86,8 @@ async def upload_image(
         is_featured=is_featured,
         is_public=is_public,
         is_hero_image=is_hero_image,
-        category_id=category_id
+        category_id=category_id,
+        is_thumbnail=is_thumbnail
     )
     image = await image_service.create_image(image_data, file, current_user.id)
     return created(image, message="Image uploaded.")

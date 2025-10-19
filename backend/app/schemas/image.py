@@ -11,6 +11,7 @@ class ImageBase(BaseModel):
     is_public: bool = True
     is_hero_image: bool = False
     category_id: Optional[int] = None
+    is_thumbnail: bool = False
 
 class ImageCreate(ImageBase):
     pass
@@ -24,6 +25,7 @@ class ImageUpdate(BaseModel):
     is_public: Optional[bool] = None
     is_hero_image: Optional[bool] = None
     category_id: Optional[int] = None
+    is_thumbnail: Optional[bool] = None
 
 class ImageInDBBase(ImageBase):
     id: int
@@ -46,3 +48,17 @@ class ImageWithOwner(ImageInDBBase):
 
 class ImageWithCategory(ImageInDBBase):
     category_obj: Optional[dict] = None
+
+class ImageOut(ImageBase):
+    id: int
+    filename: str
+    file_path: str
+    file_size: Optional[int] = None
+    mime_type: Optional[str] = None
+    owner_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    is_thumbnail: bool = False
+
+    class Config:
+        orm_mode = True

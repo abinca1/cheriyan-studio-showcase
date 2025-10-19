@@ -14,6 +14,7 @@ from app.models.refresh_token import RefreshToken
 from app.schemas.auth import TokenData, Token
 from app.schemas.user import UserCreate
 from app.utils.security import verify_password, get_password_hash
+from app.schemas.user import UserOut
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
@@ -106,7 +107,8 @@ class AuthService:
         return Token(
             access_token=access_token,
             refresh_token=refresh_token,
-            token_type="bearer"
+            token_type="bearer",
+            user=UserOut.from_orm(user)
         )
     
     @staticmethod
