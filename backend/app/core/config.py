@@ -40,7 +40,7 @@ class Settings(BaseSettings):
         """Get allowed hosts from environment variable"""
         hosts_str = os.getenv(
             "ALLOWED_HOSTS",
-            "http://localhost:3000,http://localhost:5173,http://localhost:8081,http://127.0.0.1:3000,http://127.0.0.1:8081"
+            "http://localhost:3000,http://localhost:5173,http://localhost:8081,http://127.0.0.1:3000,http://127.0.0.1:8081,http://10.252.103.200:8081/"
         )
         return [host.strip() for host in hosts_str.split(",")]
 
@@ -58,7 +58,6 @@ class Settings(BaseSettings):
     HOST: str = os.getenv("HOST", "0.0.0.0")
     PORT: int = int(os.getenv("PORT", "8000"))
 
-    # Production settings
     @property
     def is_production(self) -> bool:
         return self.ENVIRONMENT.lower() == "production"
@@ -66,10 +65,8 @@ class Settings(BaseSettings):
     @property
     def cors_origins(self) -> List[str]:
         if self.is_production:
-            # In production, only allow specific domains
             return [host.strip() for host in self.ALLOWED_HOSTS if host.strip()]
         else:
-            # In development, allow all origins
             return ["*"]
 
     class Config:
