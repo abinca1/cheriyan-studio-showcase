@@ -1,12 +1,14 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/shared/contexts/AuthContext";
-import { ProtectedRoute } from "@/shared/components/common/ProtectedRoute";
-import { HomePage } from "@/features/home";
-import { GalleryPage } from "@/features/gallery";
-import { AboutPage } from "@/features/about";
-import { ContactPage } from "@/features/contact";
-import { LoginPage, Dashboard } from "@/features/admin";
-import { NotFound } from "@/shared/components";
+import { AuthProvider } from "@/context";
+import { ProtectedRoute, NotFound } from "@/components/common";
+import {
+  HomePage,
+  GalleryPage,
+  AboutPage,
+  ContactPage,
+  LoginPage,
+  Dashboard,
+} from "@/pages";
 
 const AppRouter = () => (
   <AuthProvider>
