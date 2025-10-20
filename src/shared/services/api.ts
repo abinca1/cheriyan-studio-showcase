@@ -139,13 +139,13 @@ class ApiService {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     if (this.accessToken) {
-      headers.Authorization = `Bearer ${this.accessToken}`;
+      headers['Authorization'] = `Bearer ${this.accessToken}`;
     }
 
     const response = await fetch(url, {
@@ -158,7 +158,7 @@ class ApiService {
       const refreshed = await this.refreshAccessToken();
       if (refreshed) {
         // Retry the original request
-        headers.Authorization = `Bearer ${this.accessToken}`;
+        headers['Authorization'] = `Bearer ${this.accessToken}`;
         const retryResponse = await fetch(url, {
           ...options,
           headers,

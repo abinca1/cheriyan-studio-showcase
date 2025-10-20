@@ -33,6 +33,7 @@ export const TestimonialDialog: React.FC<TestimonialDialogProps> = ({
     rating: 5,
     is_featured: false,
     is_active: true,
+    sort_order: 0,
   });
   const [loading, setLoading] = useState(false);
 
@@ -52,6 +53,7 @@ export const TestimonialDialog: React.FC<TestimonialDialogProps> = ({
         rating: 5,
         is_featured: false,
         is_active: true,
+        sort_order: 0,
       });
     } catch (error) {
       console.error('Error creating testimonial:', error);
