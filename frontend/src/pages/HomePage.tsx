@@ -4,54 +4,68 @@ import { ArrowRight, Camera, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/layout/Navigation";
 import HeroSlideshow from "@/components/business/HeroSlideshow";
-import { apiService } from "@/services";
-import type { Testimonial } from "@/types";
+import { useQuery } from "@tanstack/react-query";
 import SocialMediaLinks from "@/components/business/SocialMediaLinks";
-import { getImageUrl } from "@/utils/imageUtils";
 import fashionImage from "@/assets/gallery-fashion-1.jpg";
 import weddingImage from "@/assets/gallery-wedding-1.jpg";
 import portraitImage from "@/assets/gallery-portrait-1.jpg";
 import productImage from "@/assets/gallery-product-1.jpg";
+import apiClient from "@/lib/axios";
 
 const HomePage = () => {
   const [isVisible, setIsVisible] = useState(false);
-  const [heroImages, setHeroImages] = useState<string[]>([]);
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // Query for hero images
+  const {
+    data: heroImagesData = [],
+    isLoading: heroImagesLoading,
+    error: heroImagesError,
+  } = useQuery({
+    queryKey: ["hero-images"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/images/");
+      if (response?.data?.success) {
+        const images = response.data.data;
+        return images.filter((img) => img.is_hero_image);
+      } else {
+        return [];
+      }
+    },
+  });
+
+  // Query for featured testimonials
+  const {
+    data: testimonials = [],
+    isLoading: testimonialsLoading,
+    error: testimonialsError,
+  } = useQuery({
+    queryKey: ["featured-testimonials"],
+    queryFn: async () => {
+      const response = await apiClient.get(
+        "/api/testimonials/?limit=3&active_only=true"
+      );
+      if (response?.data?.success) {
+        return response.data.data;
+      } else {
+        return [];
+      }
+    },
+  });
 
   useEffect(() => {
     setIsVisible(true);
-    loadHeroImages();
-    loadTestimonials();
   }, []);
 
-  const loadHeroImages = async () => {
-    try {
-      const images = await apiService.getImages();
-      const heroImageUrls = images
-        .filter((img) => img.is_hero_image)
-        .map((img) => getImageUrl(img.filename));
+  // Handle loading and error states
+  const isLoading = heroImagesLoading || testimonialsLoading;
+  const hasError = heroImagesError || testimonialsError;
 
-      setHeroImages(heroImageUrls);
-    } catch (error) {
-      console.error("Error loading hero images:", error);
-      // Fallback to empty array if API fails
-      setHeroImages([]);
-    }
-  };
-
-  const loadTestimonials = async () => {
-    try {
-      // Get only 3 featured testimonials for homepage
-      const data = await apiService.getFeaturedTestimonials(3);
-      setTestimonials(data);
-    } catch (error) {
-      console.error("Error loading testimonials:", error);
-      setTestimonials([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (hasError) {
+    console.error("Error loading data:", {
+      heroImagesError,
+      testimonialsError,
+    });
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -60,8 +74,8 @@ const HomePage = () => {
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         {/* Hero Slideshow Background */}
-        {heroImages.length > 0 && (
-          <HeroSlideshow images={heroImages} interval={5000} />
+        {heroImagesData.length > 0 && (
+          <HeroSlideshow images={heroImagesData} interval={5000} />
         )}
 
         <div
@@ -180,59 +194,178 @@ const HomePage = () => {
       </section>
 
       {/* Testimonials Section */}
-      {testimonials.length > 0 && (
-        <section className="py-24 px-4 sm:px-6 lg:px-8">
-          <div className="container mx-auto max-w-6xl">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl sm:text-5xl font-bold mb-4">
-                What Clients Say
-              </h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Hear from some of our satisfied clients about their experience
-              </p>
+      {isLoading && (
+        <section className="py-24 px-4 sm:px-6 lg:px-8 bg-slate-50">
+          <div className="container mx-auto max-w-7xl">
+            {/* Header Skeleton */}
+            <div className="text-center mb-20">
+              <div className="animate-pulse">
+                <div className="h-16 bg-muted rounded w-96 mx-auto mb-6"></div>
+                <div className="h-6 bg-muted rounded w-3/4 mx-auto"></div>
+              </div>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              {testimonials.map((testimonial, index) => (
+            {/* Testimonials Grid Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+              {[...Array(3)].map((_, i) => (
                 <div
-                  key={testimonial.id}
-                  className="p-8 rounded-lg bg-card border border-border animate-fade-in"
-                  style={{ animationDelay: `${index * 150}ms` }}
+                  key={i}
+                  className="bg-white rounded-2xl p-8 shadow-sm border animate-pulse h-full"
                 >
-                  <div className="flex mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`h-4 w-4 ${
-                          i < testimonial.rating
-                            ? "text-yellow-400 fill-current"
-                            : "text-gray-300"
-                        }`}
-                      />
-                    ))}
+                  {/* Content Skeleton */}
+                  <div className="space-y-4 mb-6">
+                    <div className="h-5 bg-muted rounded"></div>
+                    <div className="h-5 bg-muted rounded"></div>
+                    <div className="h-5 bg-muted rounded w-3/4"></div>
                   </div>
-                  <p className="text-muted-foreground mb-6 leading-relaxed">
-                    "{testimonial.content}"
-                  </p>
-                  <div>
-                    <div className="font-semibold">{testimonial.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {testimonial.title && testimonial.company
-                        ? `${testimonial.title} at ${testimonial.company}`
-                        : testimonial.title || testimonial.company || "Client"}
+
+                  {/* Rating Skeleton */}
+                  <div className="flex items-center gap-2 mb-6">
+                    {[...Array(5)].map((_, j) => (
+                      <div key={j} className="h-5 w-5 bg-muted rounded"></div>
+                    ))}
+                    <div className="h-5 bg-muted rounded w-8 ml-2"></div>
+                  </div>
+
+                  {/* Author Skeleton */}
+                  <div className="flex items-center gap-4 pt-4 border-t border-slate-100">
+                    <div className="w-12 h-12 bg-muted rounded-full"></div>
+                    <div className="space-y-2 flex-1">
+                      <div className="h-5 bg-muted rounded w-32"></div>
+                      <div className="h-4 bg-muted rounded w-20"></div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="text-center mt-12">
-              <Button asChild size="lg" variant="outline">
-                <Link to="/about">
-                  Read More Testimonials
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
+            {/* CTA Skeleton */}
+            <div className="text-center mt-16">
+              <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200/50 max-w-2xl mx-auto animate-pulse">
+                <div className="h-8 bg-muted rounded w-64 mx-auto mb-4"></div>
+                <div className="h-5 bg-muted rounded w-96 mx-auto mb-6"></div>
+                <div className="h-12 bg-muted rounded w-48 mx-auto"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {!isLoading && testimonials.length > 0 && (
+        <section className="py-24 px-4 sm:px-6 lg:px-8 bg-slate-50">
+          <div className="container mx-auto max-w-7xl">
+            {/* Header */}
+            <div className="text-center mb-20">
+              <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-slate-900">
+                Client Testimonials
+              </h2>
+              <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+                Discover what our clients have to say about their photography
+                experience with us
+              </p>
+            </div>
+
+            {/* Testimonials Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+              {testimonials.map((testimonial, index) => (
+                <div key={testimonial.id} className="group relative">
+                  {/* Card */}
+                  <div className="bg-white rounded-2xl p-6 border shadow-sm h-64 flex flex-col">
+                    {/* Featured Badge */}
+                    {testimonial.is_featured && (
+                      <div className="absolute -top-3 -right-3">
+                        <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold">
+                          ⭐ Featured
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Quote */}
+                    <div className="mb-6 flex-1">
+                      <p className="text-slate-700 text-lg leading-relaxed italic">
+                        {testimonial.content}
+                      </p>
+                    </div>
+
+                    {/* Rating */}
+                    <div className="flex items-center gap-2 mb-6">
+                      <div className="flex">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-5 w-5 ${
+                              i < (testimonial.rating || 5)
+                                ? "text-yellow-400 fill-current"
+                                : "text-slate-300"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-slate-600 font-semibold">
+                        {testimonial.rating || 5}.0
+                      </span>
+                    </div>
+
+                    {/* Author */}
+                    <div className="flex items-center gap-4 pt-4 border-t border-slate-100">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-white font-bold text-lg">
+                        {(testimonial.name || testimonial.client_name || "C")
+                          .charAt(0)
+                          .toUpperCase()}
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-bold text-slate-900 text-lg">
+                          {testimonial.name || testimonial.client_name}
+                        </div>
+                        <div className="text-slate-600">
+                          {testimonial.title ||
+                            testimonial.client_title ||
+                            "Client"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA */}
+            <div className="text-center mt-16">
+              <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200/50 max-w-2xl mx-auto">
+                <h3 className="text-2xl font-bold text-slate-900 mb-4">
+                  Ready to Create Beautiful Memories?
+                </h3>
+                <p className="text-slate-600 mb-6">
+                  Join our satisfied clients and let us capture your special
+                  moments
+                </p>
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-3"
+                >
+                  <Link to="/contact">
+                    Book Your Session
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {!isLoading && hasError && (
+        <section className="py-24 px-4 sm:px-6 lg:px-8">
+          <div className="container mx-auto max-w-6xl text-center">
+            <div className="p-8 rounded-lg bg-destructive/10 border border-destructive/20">
+              <h3 className="text-lg font-semibold text-destructive mb-2">
+                Unable to Load Content
+              </h3>
+              <p className="text-muted-foreground">
+                There was an error loading some content. Please try refreshing
+                the page.
+              </p>
             </div>
           </div>
         </section>

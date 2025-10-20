@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context";
-import { ProtectedRoute, NotFound } from "@/components/common";
+import { ProtectedRoute, NotFound, ScrollToTop } from "@/components/common";
 import {
   HomePage,
   GalleryPage,
@@ -13,6 +13,7 @@ import {
 const AppRouter = () => (
   <AuthProvider>
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/gallery" element={<GalleryPage />} />
@@ -30,7 +31,6 @@ const AppRouter = () => (
           }
         />
 
-        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>

@@ -1,7 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import apiClient from "@/lib/axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -11,8 +14,35 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { apiService } from "@/services";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { toast } from "@/hooks";
 import type { SocialMedia } from "@/types";
+
+// Zod validation schema
+const socialMediaSchema = z.object({
+  platform: z.string().min(1, "Platform is required"),
+  display_name: z.string().min(1, "Display name is required"),
+  url: z.string().url("Please enter a valid URL"),
+  icon_name: z.string().optional().or(z.literal("")),
+  is_active: z.boolean().default(true),
+  sort_order: z.number().min(0).default(0),
+});
+
+type SocialMediaFormData = z.infer<typeof socialMediaSchema>;
 
 interface SocialMediaDialogProps {
   open: boolean;
@@ -27,46 +57,74 @@ export const SocialMediaDialog: React.FC<SocialMediaDialogProps> = ({
   onSuccess,
   socialMedia,
 }) => {
-  const [formData, setFormData] = useState({
-    platform: socialMedia?.platform || "",
-    url: socialMedia?.url || "",
-    icon_name: socialMedia?.icon_name || "",
-    display_name: socialMedia?.display_name || "",
-    is_active: socialMedia?.is_active ?? true,
-    sort_order: socialMedia?.sort_order || 0,
+  const defaultValues = {
+    platform: "",
+    display_name: "",
+    url: "",
+    icon_name: "",
+    is_active: true,
+    sort_order: 0,
+  };
+  // React Hook Form
+  const form = useForm<SocialMediaFormData>({
+    resolver: zodResolver(socialMediaSchema),
+    defaultValues,
   });
-  const [loading, setLoading] = useState(false);
 
-  const isEditing = !!socialMedia;
+  const {
+    handleSubmit,
+    formState: { isSubmitting },
+    reset,
+  } = form;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  //--------------socialMedia is null when creating a new social media ------------
 
+  const onSubmit = async (data: SocialMediaFormData) => {
     try {
-      if (isEditing) {
-        await apiService.updateSocialMediaLink(socialMedia.id, formData);
+      let response;
+      if (socialMedia) {
+        // Update existing social media
+        response = await apiClient.put(
+          `/api/social-media/${socialMedia.id}`,
+          data
+        );
       } else {
-        await apiService.createSocialMediaLink(formData);
+        // Create new social media
+        response = await apiClient.post("/api/social-media/", data);
       }
 
-      onSuccess();
-      onOpenChange(false);
-
-      if (!isEditing) {
-        setFormData({
-          platform: "",
-          url: "",
-          icon_name: "",
-          display_name: "",
-          is_active: true,
-          sort_order: 0,
+      if (response?.data?.success) {
+        toast({
+          title: "Success",
+          description: socialMedia
+            ? "Social media link updated successfully"
+            : "Social media link created successfully",
         });
+
+        await onSuccess();
+        await onOpenChange(false);
+        await reset(undefined);
+      } else {
+        throw new Error(socialMedia ? "Update failed" : "Creation failed");
       }
     } catch (error) {
-      console.error("Error saving social media link:", error);
-    } finally {
-      setLoading(false);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : socialMedia
+            ? "Failed to update social media link"
+            : "Failed to create social media link",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleClose = () => {
+    if (!isSubmitting) {
+      reset(defaultValues);
+      onOpenChange(false);
     }
   };
 
@@ -82,120 +140,171 @@ export const SocialMediaDialog: React.FC<SocialMediaDialogProps> = ({
     { value: "Globe", label: "Website" },
   ];
 
+  // Don't render if form is not ready
+  if (!form) {
+    return null;
+  }
+  useEffect(() => {
+    if (socialMedia) {
+      form.reset(socialMedia);
+    } else {
+      form.reset(defaultValues);
+    }
+  }, [socialMedia]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Social Media Link" : "Add New Social Media Link"}
+            {socialMedia
+              ? "Edit Social Media Link"
+              : "Add New Social Media Link"}
           </DialogTitle>
           <DialogDescription>
-            {isEditing
+            {socialMedia
               ? "Update the social media link details."
               : "Add a new social media link to your website."}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="platform">Platform *</Label>
-              <Input
-                id="platform"
-                value={formData.platform}
-                onChange={(e) =>
-                  setFormData({ ...formData, platform: e.target.value })
-                }
-                placeholder="e.g., whatsapp, instagram, facebook"
-                required
+        <Form {...form}>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="grid gap-4 py-4">
+              <FormField
+                control={form.control}
+                name="platform"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Platform *</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="e.g., whatsapp, instagram, facebook"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="display_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Display Name *</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="e.g., WhatsApp, Instagram"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL *</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="url" placeholder="https://..." />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="icon_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Icon</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) => field.onChange(value)}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an icon..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {iconOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="sort_order"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sort Order</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value) || 0)
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="is_active"
+                render={({ field }) => (
+                  <FormItem className="flex items-center space-x-2">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel>Active</FormLabel>
+                  </FormItem>
+                )}
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="display_name">Display Name *</Label>
-              <Input
-                id="display_name"
-                value={formData.display_name}
-                onChange={(e) =>
-                  setFormData({ ...formData, display_name: e.target.value })
-                }
-                placeholder="e.g., WhatsApp, Instagram"
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="url">URL *</Label>
-              <Input
-                id="url"
-                type="url"
-                value={formData.url}
-                onChange={(e) =>
-                  setFormData({ ...formData, url: e.target.value })
-                }
-                placeholder="https://..."
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="icon_name">Icon</Label>
-              <select
-                id="icon_name"
-                value={formData.icon_name}
-                onChange={(e) =>
-                  setFormData({ ...formData, icon_name: e.target.value })
-                }
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                required
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={isSubmitting}
               >
-                <option value="">Select an icon...</option>
-                {iconOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="sort_order">Sort Order</Label>
-              <Input
-                id="sort_order"
-                type="number"
-                value={formData.sort_order}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    sort_order: parseInt(e.target.value) || 0,
-                  })
-                }
-                min="0"
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="is_active"
-                checked={formData.is_active}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, is_active: !!checked })
-                }
-              />
-              <Label htmlFor="is_active">Active</Label>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading
-                ? "Saving..."
-                : isEditing
-                ? "Update Link"
-                : "Create Link"}
-            </Button>
-          </DialogFooter>
-        </form>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting
+                  ? socialMedia
+                    ? "Updating..."
+                    : "Creating..."
+                  : socialMedia
+                  ? "Update Link"
+                  : "Create Link"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

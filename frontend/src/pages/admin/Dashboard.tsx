@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   apiService,
   Image,
@@ -34,22 +35,102 @@ import {
   Monitor,
   Tag,
 } from "lucide-react";
-import { ImageUploadDialog } from "./ImageUploadDialog";
-import { ImageEditDialog } from "./ImageEditDialog";
-import { ImageGrid } from "../ImageGrid";
-import { TestimonialDialog } from "./TestimonialDialog";
-import { HeroSlideDialog } from "./HeroSlideDialog";
-import { SocialMediaDialog } from "./SocialMediaDialog";
+import ImageUploadDialog from "./ImageUploadDialog";
+import ImageEditDialog from "./ImageEditDialog";
+import { ImageGrid } from "@/components/business";
+import TestimonialDialog from "./TestimonialDialog";
+import HeroSlideDialog from "./HeroSlideDialog";
+import SocialMediaDialog from "./SocialMediaDialog";
+import CategoryDialog from "./CategoryDialog";
+import apiClient from "@/lib/axios";
+import { toast } from "@/hooks";
 
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const [images, setImages] = useState<Image[]>([]);
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-  const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [socialMediaLinks, setSocialMediaLinks] = useState<SocialMedia[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+
+  // Use TanStack Query for data fetching
+  const {
+    data: images = [],
+    isLoading: imagesLoading,
+    error: imagesError,
+    refetch: refetchImages,
+  } = useQuery({
+    queryKey: ["images"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/images/my-images");
+      if (response?.data?.success) return response?.data?.data || [];
+      else throw new Error("Failed to fetch images");
+    },
+  });
+
+  const {
+    data: testimonials = [],
+    isLoading: testimonialsLoading,
+    error: testimonialsError,
+    refetch: refetchTestimonials,
+  } = useQuery({
+    queryKey: ["testimonials"],
+    queryFn: async () => {
+      const response = await apiClient.get(
+        "/api/testimonials/?active_only=false"
+      );
+      if (response?.data?.success) return response?.data?.data || [];
+      else throw new Error("Failed to fetch testimonials");
+    },
+  });
+
+  const {
+    data: heroSlides = [],
+    isLoading: heroSlidesLoading,
+    error: heroSlidesError,
+    refetch: refetchHeroSlides,
+  } = useQuery({
+    queryKey: ["hero-slides"],
+    queryFn: async () => {
+      const response = await apiClient.get(
+        "/api/hero-slides/?active_only=false"
+      );
+      if (response?.data?.success) return response?.data?.data || [];
+      else throw new Error("Failed to fetch hero slides");
+    },
+  });
+
+  const {
+    data: categories = [],
+    isLoading: categoriesLoading,
+    error: categoriesError,
+    refetch: refetchCategories,
+  } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/categories/");
+      if (response?.data?.success) return response?.data?.data || [];
+      else throw new Error("Failed to fetch categories");
+    },
+  });
+
+  const {
+    data: socialMediaLinks = [],
+    isLoading: socialMediaLoading,
+    error: socialMediaError,
+    refetch: refetchSocialMedia,
+  } = useQuery({
+    queryKey: ["social-media"],
+    queryFn: async () => {
+      const response = await apiClient.get(
+        "/api/social-media/?active_only=false"
+      );
+      if (response?.data?.success) return response?.data?.data || [];
+      else throw new Error("Failed to fetch social media links");
+    },
+  });
+
+  const isLoading =
+    imagesLoading ||
+    testimonialsLoading ||
+    heroSlidesLoading ||
+    categoriesLoading ||
+    socialMediaLoading;
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingImage, setEditingImage] = useState<Image | null>(null);
@@ -58,76 +139,16 @@ export const Dashboard: React.FC = () => {
   const [showSocialMediaDialog, setShowSocialMediaDialog] = useState(false);
   const [editingSocialMedia, setEditingSocialMedia] =
     useState<SocialMedia | null>(null);
-
-  const loadImages = async () => {
-    try {
-      setIsLoading(true);
-      const data = await apiService.getMyImages({ limit: 50 });
-      setImages(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load images");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadTestimonials = async () => {
-    try {
-      const data = await apiService.getTestimonials(false); // Load all testimonials
-      setTestimonials(data);
-    } catch (err) {
-      console.error("Failed to load testimonials:", err);
-    }
-  };
-
-  const loadHeroSlides = async () => {
-    try {
-      const data = await apiService.getHeroSlides(false); // Load all slides
-      setHeroSlides(data);
-    } catch (err) {
-      console.error("Failed to load hero slides:", err);
-    }
-  };
-
-  const loadCategories = async () => {
-    try {
-      const data = await apiService.getCategories();
-      setCategories(data);
-    } catch (err) {
-      console.error("Failed to load categories:", err);
-    }
-  };
-
-  const loadSocialMediaLinks = async () => {
-    try {
-      const data = await apiService.getSocialMediaLinks(false); // Load all links
-      setSocialMediaLinks(data);
-    } catch (err) {
-      console.error("Failed to load social media links:", err);
-    }
-  };
-
-  const loadAllData = async () => {
-    await Promise.all([
-      loadImages(),
-      loadTestimonials(),
-      loadHeroSlides(),
-      loadCategories(),
-      loadSocialMediaLinks(),
-    ]);
-  };
-
-  useEffect(() => {
-    loadAllData();
-  }, []);
+  const [editingTestimonial, setEditingTestimonial] =
+    useState<Testimonial | null>(null);
+  const [showCategoryDialog, setShowCategoryDialog] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const queryClient = useQueryClient();
 
   const handleImageUpload = async (imageData: any) => {
-    try {
-      await loadImages(); // Refresh the images list
-      setShowUploadDialog(false);
-    } catch (err) {
-      console.error("Failed to refresh images:", err);
-    }
+    // Invalidate queries to refresh data
+    queryClient.invalidateQueries({ queryKey: ["images"] });
+    setShowUploadDialog(false);
   };
 
   const handleEditImage = (image: Image) => {
@@ -139,15 +160,109 @@ export const Dashboard: React.FC = () => {
     if (!confirm("Are you sure you want to delete this image?")) return;
 
     try {
-      await apiService.deleteImage(imageId);
-      setImages(images.filter((img) => img.id !== imageId));
+      await apiClient.delete(`/api/images/${imageId}`);
+
+      queryClient.invalidateQueries({ queryKey: ["images"] });
+
+      toast({
+        title: "Success",
+        description: "Image deleted successfully",
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete image");
+      console.error("Failed to delete image:", err);
+
+      toast({
+        title: "Error",
+        description: "Failed to delete image. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditTestimonial = (testimonial: Testimonial) => {
+    setEditingTestimonial(testimonial);
+    setShowTestimonialDialog(true);
+  };
+
+  const handleDeleteTestimonial = async (testimonialId: number) => {
+    if (!confirm("Are you sure you want to delete this testimonial?")) return;
+
+    try {
+      await apiClient.delete(`/api/testimonials/${testimonialId}`);
+
+      queryClient.invalidateQueries({ queryKey: ["testimonials"] });
+
+      toast({
+        title: "Success",
+        description: "Testimonial deleted successfully",
+      });
+    } catch (err) {
+      console.error("Failed to delete testimonial:", err);
+
+      toast({
+        title: "Error",
+        description: "Failed to delete testimonial. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    setShowCategoryDialog(true);
+  };
+
+  const handleDeleteCategory = async (categoryId: number) => {
+    if (!confirm("Are you sure you want to delete this category?")) return;
+
+    try {
+      await apiClient.delete(`/api/categories/${categoryId}`);
+
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+
+      toast({
+        title: "Success",
+        description: "Category deleted successfully",
+      });
+    } catch (err) {
+      console.error("Failed to delete category:", err);
+
+      toast({
+        title: "Error",
+        description: "Failed to delete category. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteSocialMedia = async (socialMediaId: number) => {
+    if (!confirm("Are you sure you want to delete this social media link?"))
+      return;
+
+    try {
+      await apiClient.delete(`/api/social-media/${socialMediaId}`);
+
+      queryClient.invalidateQueries({ queryKey: ["social-media"] });
+
+      toast({
+        title: "Success",
+        description: "Social media link deleted successfully",
+      });
+    } catch (err) {
+      console.error("Failed to delete social media link:", err);
+
+      toast({
+        title: "Error",
+        description: "Failed to delete social media link. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleLogout = async () => {
-    await logout();
+    if (confirm("Are you sure you want to logout?")) {
+      await logout();
+    }
   };
 
   const stats = {
@@ -174,7 +289,7 @@ export const Dashboard: React.FC = () => {
                 Admin Dashboard
               </h1>
               <p className="text-sm text-gray-500">
-                Welcome back, {user?.full_name}
+                Welcome back, {user?.username}
               </p>
             </div>
             <div className="flex items-center space-x-4">
@@ -190,9 +305,20 @@ export const Dashboard: React.FC = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {error && (
+        {(imagesError ||
+          testimonialsError ||
+          heroSlidesError ||
+          categoriesError ||
+          socialMediaError) && (
           <Alert variant="destructive" className="mb-6">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>
+              {imagesError?.message ||
+                testimonialsError?.message ||
+                heroSlidesError?.message ||
+                categoriesError?.message ||
+                socialMediaError?.message ||
+                "An error occurred"}
+            </AlertDescription>
           </Alert>
         )}
 
@@ -481,9 +607,7 @@ export const Dashboard: React.FC = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() =>
-                                console.log("Edit testimonial:", testimonial.id)
-                              }
+                              onClick={() => handleEditTestimonial(testimonial)}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -491,10 +615,7 @@ export const Dashboard: React.FC = () => {
                               variant="outline"
                               size="sm"
                               onClick={() =>
-                                console.log(
-                                  "Delete testimonial:",
-                                  testimonial.id
-                                )
+                                handleDeleteTestimonial(testimonial.id)
                               }
                             >
                               <Trash2 className="h-4 w-4" />
@@ -512,7 +633,12 @@ export const Dashboard: React.FC = () => {
           <TabsContent value="categories" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold">Categories Management</h2>
-              <Button>
+              <Button
+                onClick={() => {
+                  setEditingCategory(null);
+                  setShowCategoryDialog(true);
+                }}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Category
               </Button>
@@ -557,10 +683,18 @@ export const Dashboard: React.FC = () => {
                             Slug: {category.slug}
                           </span>
                           <div className="flex space-x-1">
-                            <Button variant="outline" size="sm">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditCategory(category)}
+                            >
                               <Edit className="h-3 w-3" />
                             </Button>
-                            <Button variant="outline" size="sm">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteCategory(category.id)}
+                            >
                               <Trash2 className="h-3 w-3" />
                             </Button>
                           </div>
@@ -646,9 +780,7 @@ export const Dashboard: React.FC = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() =>
-                              console.log("Delete social media link:", link.id)
-                            }
+                            onClick={() => handleDeleteSocialMedia(link.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -680,13 +812,11 @@ export const Dashboard: React.FC = () => {
                 </div>
                 <div>
                   <label className="text-sm font-medium">Full Name</label>
-                  <p className="text-sm text-gray-600">{user?.full_name}</p>
+                  <p className="text-sm text-gray-600">{user?.username}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium">Role</label>
-                  <Badge variant={user?.is_admin ? "default" : "secondary"}>
-                    {user?.is_admin ? "Administrator" : "User"}
-                  </Badge>
+                  <Badge variant="default">Administrator</Badge>
                 </div>
               </CardContent>
             </Card>
@@ -708,22 +838,32 @@ export const Dashboard: React.FC = () => {
           setShowEditDialog(open);
           if (!open) setEditingImage(null);
         }}
-        onSuccess={loadImages}
+        onSuccess={() =>
+          queryClient.invalidateQueries({ queryKey: ["images"] })
+        }
         image={editingImage}
       />
 
       {/* Testimonial Dialog */}
       <TestimonialDialog
         open={showTestimonialDialog}
-        onOpenChange={setShowTestimonialDialog}
-        onSuccess={loadTestimonials}
+        onOpenChange={(open) => {
+          setShowTestimonialDialog(open);
+          if (!open) setEditingTestimonial(null);
+        }}
+        onSuccess={() =>
+          queryClient.invalidateQueries({ queryKey: ["testimonials"] })
+        }
+        testimonial={editingTestimonial}
       />
 
       {/* Hero Slide Dialog */}
       <HeroSlideDialog
         open={showHeroSlideDialog}
         onOpenChange={setShowHeroSlideDialog}
-        onSuccess={loadHeroSlides}
+        onSuccess={() =>
+          queryClient.invalidateQueries({ queryKey: ["hero-slides"] })
+        }
       />
 
       {/* Social Media Dialog */}
@@ -733,8 +873,23 @@ export const Dashboard: React.FC = () => {
           setShowSocialMediaDialog(open);
           if (!open) setEditingSocialMedia(null);
         }}
-        onSuccess={loadSocialMediaLinks}
+        onSuccess={() =>
+          queryClient.invalidateQueries({ queryKey: ["social-media"] })
+        }
         socialMedia={editingSocialMedia}
+      />
+
+      {/* Category Dialog */}
+      <CategoryDialog
+        open={showCategoryDialog}
+        onOpenChange={(open) => {
+          setShowCategoryDialog(open);
+          if (!open) setEditingCategory(null);
+        }}
+        onSuccess={() =>
+          queryClient.invalidateQueries({ queryKey: ["categories"] })
+        }
+        category={editingCategory}
       />
     </div>
   );

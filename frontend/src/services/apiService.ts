@@ -362,7 +362,7 @@ class ApiService {
   }
 
   getImageUrl(imagePath: string): string {
-    return `${this.baseURL}/static/${imagePath.replace("app/static/", "")}`;
+    return `${this.baseURL}/${imagePath.replace("app/static/", "")}`;
   }
 }
 

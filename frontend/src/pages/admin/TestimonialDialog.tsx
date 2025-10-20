@@ -1,9 +1,19 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import apiClient from "@/lib/axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -12,20 +22,44 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { apiService } from "@/services";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { toast } from "@/hooks";
+
+// Zod validation schema
+const testimonialSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  title: z.string().optional(),
+  company: z.string().optional(),
+  content: z.string().min(1, "Content is required"),
+  rating: z.number().min(1).max(5).default(5),
+  is_featured: z.boolean().default(false),
+  is_active: z.boolean().default(true),
+  sort_order: z.number().optional(),
+});
+
+type TestimonialFormData = z.infer<typeof testimonialSchema>;
 
 interface TestimonialDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  testimonial?: any | null;
 }
 
 export const TestimonialDialog: React.FC<TestimonialDialogProps> = ({
   open,
   onOpenChange,
   onSuccess,
+  testimonial,
 }) => {
-  const [formData, setFormData] = useState({
+  const defaultValues = {
     name: "",
     title: "",
     company: "",
@@ -33,30 +67,76 @@ export const TestimonialDialog: React.FC<TestimonialDialogProps> = ({
     rating: 5,
     is_featured: false,
     is_active: true,
+    sort_order: 0,
+  };
+
+  // React Hook Form
+  const form = useForm<TestimonialFormData>({
+    resolver: zodResolver(testimonialSchema),
+    defaultValues,
   });
-  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  const {
+    handleSubmit,
+    formState: { isSubmitting },
+    reset,
+  } = form;
 
+  //--------------testimonial is null when creating a new testimonial ------------
+
+  useEffect(() => {
+    if (testimonial) {
+      form.reset(testimonial);
+    } else {
+      form.reset(defaultValues);
+    }
+  }, [testimonial]);
+
+  const onSubmit = async (data: TestimonialFormData) => {
     try {
-      await apiService.createTestimonial(formData);
-      onSuccess();
-      onOpenChange(false);
-      setFormData({
-        name: "",
-        title: "",
-        company: "",
-        content: "",
-        rating: 5,
-        is_featured: false,
-        is_active: true,
-      });
+      let response;
+      if (testimonial) {
+        // Update existing testimonial
+        response = await apiClient.put(
+          `/api/testimonials/${testimonial.id}`,
+          data
+        );
+      } else {
+        // Create new testimonial
+        response = await apiClient.post("/api/testimonials/", data);
+      }
+
+      if (response?.data?.success) {
+        toast({
+          title: "Success",
+          description: testimonial
+            ? "Testimonial updated successfully"
+            : "Testimonial created successfully",
+        });
+        await onSuccess();
+        await onOpenChange(false);
+        await reset(defaultValues);
+      } else {
+        throw new Error(testimonial ? "Update failed" : "Creation failed");
+      }
     } catch (error) {
-      console.error("Error creating testimonial:", error);
-    } finally {
-      setLoading(false);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : testimonial
+            ? "Failed to update testimonial"
+            : "Failed to create testimonial",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleClose = () => {
+    if (!isSubmitting) {
+      reset(defaultValues);
+      onOpenChange(false);
     }
   };
 
@@ -64,109 +144,161 @@ export const TestimonialDialog: React.FC<TestimonialDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add New Testimonial</DialogTitle>
+          <DialogTitle>
+            {testimonial ? "Edit Testimonial" : "Add New Testimonial"}
+          </DialogTitle>
           <DialogDescription>
-            Create a new testimonial for your website.
+            {testimonial
+              ? "Update the testimonial details."
+              : "Create a new testimonial for your website."}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                required
+        <Form {...form}>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="grid gap-4 py-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name *</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Client name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                placeholder="e.g., CEO, Manager"
+
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="e.g., CEO, Manager" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="company">Company</Label>
-              <Input
-                id="company"
-                value={formData.company}
-                onChange={(e) =>
-                  setFormData({ ...formData, company: e.target.value })
-                }
-                placeholder="Company name"
+
+              <FormField
+                control={form.control}
+                name="company"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Company name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="content">Testimonial Content *</Label>
-              <Textarea
-                id="content"
-                value={formData.content}
-                onChange={(e) =>
-                  setFormData({ ...formData, content: e.target.value })
-                }
-                placeholder="Write the testimonial content..."
-                required
+
+              <FormField
+                control={form.control}
+                name="content"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Testimonial Content *</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="Write the testimonial content..."
+                        rows={4}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
+
+              <FormField
+                control={form.control}
+                name="rating"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Rating</FormLabel>
+                    <Select
+                      value={field.value.toString()}
+                      onValueChange={(value) => field.onChange(parseInt(value))}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select rating" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="1">1 Star</SelectItem>
+                        <SelectItem value="2">2 Stars</SelectItem>
+                        <SelectItem value="3">3 Stars</SelectItem>
+                        <SelectItem value="4">4 Stars</SelectItem>
+                        <SelectItem value="5">5 Stars</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid gap-4">
+                <FormField
+                  control={form.control}
+                  name="is_featured"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-x-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Featured testimonial</FormLabel>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="is_active"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-x-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Active</FormLabel>
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="rating">Rating</Label>
-              <select
-                id="rating"
-                value={formData.rating}
-                onChange={(e) =>
-                  setFormData({ ...formData, rating: parseInt(e.target.value) })
-                }
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={isSubmitting}
               >
-                <option value={1}>1 Star</option>
-                <option value={2}>2 Stars</option>
-                <option value={3}>3 Stars</option>
-                <option value={4}>4 Stars</option>
-                <option value={5}>5 Stars</option>
-              </select>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="is_featured"
-                checked={formData.is_featured}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, is_featured: !!checked })
-                }
-              />
-              <Label htmlFor="is_featured">Featured testimonial</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="is_active"
-                checked={formData.is_active}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, is_active: !!checked })
-                }
-              />
-              <Label htmlFor="is_active">Active</Label>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Creating..." : "Create Testimonial"}
-            </Button>
-          </DialogFooter>
-        </form>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting
+                  ? testimonial
+                    ? "Updating..."
+                    : "Creating..."
+                  : testimonial
+                  ? "Update Testimonial"
+                  : "Create Testimonial"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { apiService } from "@/services";
 import type { User, LoginRequest } from "@/types";
+import apiClient from "@/lib/axios";
 
 interface AuthContextType {
   user: User | null;
@@ -15,6 +16,8 @@ interface AuthContextType {
   login: (credentials: LoginRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  setUser: (user: User | null) => void;
+  setIsAuthenticated: (isAuthenticated: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,14 +37,15 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  const isAuthenticated = !!user && apiService.isAuthenticated();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const refreshUser = async () => {
     try {
-      if (apiService.isAuthenticated()) {
-        const userData = await apiService.getCurrentUser();
-        setUser(userData);
+      const response = await apiClient.get("/api/auth/me");
+
+      if (response?.data?.success) {
+        setUser(response?.data?.data);
+        setIsAuthenticated(true);
       }
     } catch (error) {
       console.error("Failed to refresh user:", error);
@@ -65,6 +69,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async () => {
     try {
       await apiService.logout();
+      localStorage.removeItem("access_token");
+      setIsAuthenticated(false);
+      setUser(null);
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
@@ -75,9 +82,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        if (apiService.isAuthenticated()) {
-          await refreshUser();
-        }
+        await refreshUser();
       } catch (error) {
         console.error("Auth initialization failed:", error);
       } finally {
@@ -95,6 +100,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     logout,
     refreshUser,
+    setUser,
+    setIsAuthenticated,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

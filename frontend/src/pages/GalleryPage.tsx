@@ -1,43 +1,63 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/layout/Navigation";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  apiService,
-  type Image,
-  type Category as ApiCategory,
-} from "@/services";
+import { type Image, type Category as ApiCategory } from "@/types";
 import SocialMediaLinks from "@/components/business/SocialMediaLinks";
 import { getImageUrl } from "@/utils/imageUtils";
+import apiClient from "@/lib/axios";
 
-import type { Category, GalleryImage } from "@/types";
+import type { GalleryImage } from "@/types";
 
 const GalleryPage = () => {
-  const [selectedCategory, setSelectedCategory] = useState<Category>("All");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
-  const [images, setImages] = useState<Image[]>([]);
-  const [categories, setCategories] = useState<ApiCategory[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  // Query for images
+  const {
+    data: images = [],
+    isLoading: imagesLoading,
+    error: imagesError,
+  } = useQuery<Image[]>({
+    queryKey: ["gallery-images"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/images/");
+      if (response?.data?.success) {
+        return response.data.data;
+      } else {
+        return [];
+      }
+    },
+  });
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [imagesData, categoriesData] = await Promise.all([
-        apiService.getImages(),
-        apiService.getCategories(),
-      ]);
-      setImages(imagesData);
-      setCategories(categoriesData);
-    } catch (error) {
-      console.error("Error loading gallery data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Query for categories
+  const {
+    data: categories = [],
+    isLoading: categoriesLoading,
+    error: categoriesError,
+  } = useQuery<ApiCategory[]>({
+    queryKey: ["gallery-categories"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/categories/");
+      if (response?.data?.success) {
+        return response.data.data;
+      } else {
+        return [];
+      }
+    },
+  });
+
+  // Handle loading and error states
+  const isLoading = imagesLoading || categoriesLoading;
+  const hasError = imagesError || categoriesError;
+
+  if (hasError) {
+    console.error("Error loading gallery data:", {
+      imagesError,
+      categoriesError,
+    });
+  }
 
   // Convert API categories to gallery categories and add categories from images
   const imageCategories = [
@@ -46,7 +66,7 @@ const GalleryPage = () => {
   const allCategories = [
     ...new Set([...categories.map((cat) => cat.name), ...imageCategories]),
   ];
-  const galleryCategories: Category[] = ["All", ...allCategories];
+  const galleryCategories: string[] = ["All", ...allCategories];
 
   // Convert API images to gallery images and filter
   const galleryImages: GalleryImage[] = images.map((img) => ({
@@ -128,10 +148,16 @@ const GalleryPage = () => {
           </div>
 
           {/* Gallery Grid */}
-          {loading ? (
+          {isLoading ? (
             <div className="text-center py-12">
               <p className="font-body text-muted-foreground">
                 Loading gallery...
+              </p>
+            </div>
+          ) : hasError ? (
+            <div className="text-center py-12">
+              <p className="font-body text-muted-foreground">
+                Failed to load gallery. Please try again later.
               </p>
             </div>
           ) : (
@@ -163,7 +189,7 @@ const GalleryPage = () => {
             </div>
           )}
 
-          {!loading && filteredImages.length === 0 && (
+          {!isLoading && !hasError && filteredImages.length === 0 && (
             <div className="text-center py-12">
               <p className="font-body text-muted-foreground">
                 No images found in this category.

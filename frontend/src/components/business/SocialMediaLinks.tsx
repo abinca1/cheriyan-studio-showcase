@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   MessageCircle,
   Instagram,
@@ -11,7 +12,7 @@ import {
   Globe,
   LucideIcon,
 } from "lucide-react";
-import { apiService, type SocialMedia } from "@/services";
+import apiClient from "@/lib/axios";
 
 // Custom WhatsApp Icon Component
 const WhatsAppIcon: React.FC<{ size?: number; className?: string }> = ({
@@ -53,26 +54,23 @@ export const SocialMediaLinks: React.FC<SocialMediaLinksProps> = ({
   iconSize = 24,
   showLabels = false,
 }) => {
-  const [socialLinks, setSocialLinks] = useState<SocialMedia[]>([]);
-  const [loading, setLoading] = useState(true);
+  // TanStack Query for social media links
+  const {
+    data: socialLinks = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["social-media", "active"],
+    queryFn: async () => {
+      const response = await apiClient.get(
+        "/api/social-media/?active_only=true"
+      );
+      if (response?.data?.success) return response?.data?.data || [];
+      else throw new Error("Failed to fetch social media links");
+    },
+  });
 
-  useEffect(() => {
-    loadSocialLinks();
-  }, []);
-
-  const loadSocialLinks = async () => {
-    try {
-      const data = await apiService.getSocialMediaLinks(true); // Only active links
-      setSocialLinks(data);
-    } catch (error) {
-      console.error("Error loading social media links:", error);
-      setSocialLinks([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className={`flex space-x-4 ${className}`}>
         {[1, 2, 3].map((i) => (
@@ -86,6 +84,11 @@ export const SocialMediaLinks: React.FC<SocialMediaLinksProps> = ({
     );
   }
 
+  if (error) {
+    console.error("Error loading social media links:", error);
+    return null;
+  }
+
   if (socialLinks.length === 0) {
     return null;
   }
@@ -93,7 +96,7 @@ export const SocialMediaLinks: React.FC<SocialMediaLinksProps> = ({
   return (
     <div className={`flex items-center space-x-4 ${className}`}>
       {socialLinks.map((link) => {
-        const IconComponent = iconMap[link.icon_name] || Globe;
+        const IconComponent = iconMap[link.platform] || Globe;
 
         return (
           <a
@@ -102,7 +105,7 @@ export const SocialMediaLinks: React.FC<SocialMediaLinksProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             className="group transition-all duration-300 hover:scale-110"
-            title={link.display_name}
+            title={link.platform}
           >
             <div className="flex items-center space-x-2 p-2 rounded-lg bg-background/80 backdrop-blur-sm border border-border/50 hover:bg-accent hover:text-accent-foreground transition-colors">
               <IconComponent
@@ -111,7 +114,7 @@ export const SocialMediaLinks: React.FC<SocialMediaLinksProps> = ({
               />
               {showLabels && (
                 <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                  {link.display_name}
+                  {link.platform}
                 </span>
               )}
             </div>

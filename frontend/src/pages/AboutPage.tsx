@@ -1,15 +1,12 @@
 import { useState, useEffect } from "react";
 import Navigation from "@/components/layout/Navigation";
 import { Camera, Award, Users, Heart, Star } from "lucide-react";
-import { apiService } from "@/services";
-import type { Testimonial } from "@/types";
+import { useQuery } from "@tanstack/react-query";
 import SocialMediaLinks from "@/components/business/SocialMediaLinks";
 import photographerPortrait from "@/assets/photographer-portrait.jpg";
+import apiClient from "@/lib/axios";
 
 const AboutPage = () => {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-  const [loading, setLoading] = useState(true);
-
   const stats = [
     { icon: Camera, value: "5+", label: "Years Experience" },
     // { icon: Award, value: "50+", label: "Awards Won" },
@@ -17,24 +14,28 @@ const AboutPage = () => {
     { icon: Heart, value: "100+", label: "Projects Completed" },
   ];
 
-  useEffect(() => {
-    loadTestimonials();
-  }, []);
+  // Use TanStack Query for testimonials
+  const {
+    data: testimonials = [],
+    isLoading: loading,
+    error: testimonialsError,
+  } = useQuery({
+    queryKey: ["featured-testimonials-about"],
+    queryFn: async () => {
+      const response = await apiClient.get(
+        "/api/testimonials/?active_only=true"
+      );
+      if (response?.data?.success) {
+        return response.data.data;
+      } else {
+        return [];
+      }
+    },
+  });
 
-  const loadTestimonials = async () => {
-    try {
-      setLoading(true);
-      // Get featured testimonials for the about page
-      const data = await apiService.getFeaturedTestimonials();
-      setTestimonials(data);
-    } catch (error) {
-      console.error("Error loading testimonials:", error);
-      // Fallback to empty array if API fails
-      setTestimonials([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (testimonialsError) {
+    console.error("Error loading testimonials:", testimonialsError);
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -147,6 +148,12 @@ const AboutPage = () => {
                   Loading testimonials...
                 </p>
               </div>
+            ) : testimonialsError ? (
+              <div className="text-center py-12">
+                <p className="font-body text-muted-foreground">
+                  Failed to load testimonials. Please try again later.
+                </p>
+              </div>
             ) : testimonials.length === 0 ? (
               <div className="text-center py-12">
                 <p className="font-body text-muted-foreground">
@@ -154,38 +161,63 @@ const AboutPage = () => {
                 </p>
               </div>
             ) : (
-              <div className="grid md:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                 {testimonials.map((testimonial, index) => (
-                  <div
-                    key={testimonial.id}
-                    className="p-8 rounded-sm bg-card border border-border animate-fade-in"
-                    style={{ animationDelay: `${index * 150}ms` }}
-                  >
-                    <div className="flex mb-4">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${
-                            i < testimonial.rating
-                              ? "text-yellow-400 fill-current"
-                              : "text-gray-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <p className="font-body text-muted-foreground mb-6 leading-relaxed">
-                      "{testimonial.content}"
-                    </p>
-                    <div>
-                      <div className="font-body font-semibold">
-                        {testimonial.name}
+                  <div key={testimonial.id} className="group relative">
+                    {/* Card */}
+                    <div className="bg-white rounded-2xl p-6 border shadow-sm h-64 flex flex-col">
+                      {/* Featured Badge */}
+                      {testimonial.is_featured && (
+                        <div className="absolute -top-3 -right-3">
+                          <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold">
+                            ⭐ Featured
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Quote */}
+                      <div className="mb-6 flex-1">
+                        <p className="text-slate-700 text-lg leading-relaxed italic">
+                          {testimonial.content}
+                        </p>
                       </div>
-                      <div className="font-body text-sm text-muted-foreground">
-                        {testimonial.title && testimonial.company
-                          ? `${testimonial.title} at ${testimonial.company}`
-                          : testimonial.title ||
-                            testimonial.company ||
-                            "Client"}
+
+                      {/* Rating */}
+                      <div className="flex items-center gap-2 mb-6">
+                        <div className="flex">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-5 w-5 ${
+                                i < (testimonial.rating || 5)
+                                  ? "text-yellow-400 fill-current"
+                                  : "text-slate-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-slate-600 font-semibold">
+                          {testimonial.rating || 5}.0
+                        </span>
+                      </div>
+
+                      {/* Author */}
+                      <div className="flex items-center gap-4 pt-4 border-t border-slate-100">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-white font-bold text-lg">
+                          {(testimonial.name || testimonial.client_name || "C")
+                            .charAt(0)
+                            .toUpperCase()}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-bold text-slate-900 text-lg">
+                            {testimonial.name || testimonial.client_name}
+                          </div>
+                          <div className="text-slate-600">
+                            {testimonial.title ||
+                              testimonial.client_title ||
+                              "Client"}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

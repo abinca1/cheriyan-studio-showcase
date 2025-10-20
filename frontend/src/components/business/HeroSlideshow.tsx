@@ -1,7 +1,8 @@
+import { apiUrl } from "@/config/env";
 import { useEffect, useState } from "react";
 
 interface HeroSlideshowProps {
-  images: string[];
+  images: any[];
   interval?: number;
 }
 
@@ -18,6 +19,7 @@ const HeroSlideshow = ({ images, interval = 5000 }: HeroSlideshowProps) => {
 
     return () => clearInterval(timer);
   }, [images.length, interval, isPaused]);
+  console.log("URL", `${apiUrl}${images[0]?.file_path}`);
 
   return (
     <div
@@ -32,7 +34,7 @@ const HeroSlideshow = ({ images, interval = 5000 }: HeroSlideshowProps) => {
             index === currentSlide ? "opacity-100" : "opacity-0"
           }`}
           style={{
-            backgroundImage: `url(${image})`,
+            backgroundImage: `url(${apiUrl}/${image?.file_path})`,
           }}
         />
       ))}

@@ -20,15 +20,16 @@ import {
   Download,
   Calendar,
 } from "lucide-react";
+import { apiUrl } from "@/config/env";
 
 interface ImageGridProps {
-  images: Image[];
+  images: any[];
   isLoading: boolean;
   onDelete: (imageId: number) => void;
   onEdit: (image: Image) => void;
 }
 
-export const ImageGrid: React.FC<ImageGridProps> = ({
+const ImageGrid: React.FC<ImageGridProps> = ({
   images,
   isLoading,
   onDelete,
@@ -74,10 +75,6 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
     });
   };
 
-  const getImageUrl = (image: Image) => {
-    return apiService.getImageUrl(image.file_path);
-  };
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {images.map((image) => (
@@ -88,7 +85,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
           {/* Image */}
           <div className="aspect-square relative overflow-hidden bg-gray-100">
             <img
-              src={getImageUrl(image)}
+              src={`${apiUrl}/${image?.file_path}`}
               alt={image.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
               onError={(e) => {
@@ -222,4 +219,5 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
     </div>
   );
 };
+
 export default ImageGrid;

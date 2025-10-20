@@ -1,7 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
+import apiClient from "@/lib/axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -19,9 +23,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { apiService } from "@/services";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import type { Image, Category } from "@/types";
 import { getImageUrl } from "@/utils/imageUtils";
+import { toast } from "@/hooks";
+
+// Zod validation schema
+const editSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  category_id: z.any().optional(),
+  tags: z.string().optional(),
+  is_featured: z.boolean().default(false),
+  is_public: z.boolean().default(true),
+  is_hero_image: z.boolean().default(false),
+});
+
+type EditFormData = z.infer<typeof editSchema>;
 
 interface ImageEditDialogProps {
   open: boolean;
@@ -30,80 +55,79 @@ interface ImageEditDialogProps {
   image: Image | null;
 }
 
-export const ImageEditDialog: React.FC<ImageEditDialogProps> = ({
+const ImageEditDialog: React.FC<ImageEditDialogProps> = ({
   open,
   onOpenChange,
   onSuccess,
   image,
 }) => {
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    tags: "",
-    category_id: "",
-    is_public: true,
-    is_featured: false,
-    is_hero_image: false,
+  // TanStack Query for categories
+  const {
+    data: categories = [],
+    isLoading: loadingCategories,
+    error: categoriesError,
+  } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/categories/");
+      if (response?.data?.success) return response?.data?.data || [];
+      else throw new Error("Failed to fetch categories");
+    },
+    enabled: open,
   });
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (image) {
-      setFormData({
-        title: image.title || "",
-        description: image.description || "",
-        tags: image.tags || "",
-        category_id: image.category_id?.toString() || "",
-        is_public: image.is_public ?? true,
-        is_featured: image.is_featured ?? false,
-        is_hero_image: image.is_hero_image ?? false,
-      });
-    }
-  }, [image]);
+  // React Hook Form
+  const form = useForm<EditFormData>({
+    resolver: zodResolver(editSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      category_id: undefined,
+      tags: "",
+      is_featured: false,
+      is_public: false,
+      is_hero_image: false,
+    },
+    values: image,
+  });
 
-  useEffect(() => {
-    if (open) {
-      loadCategories();
-    }
-  }, [open]);
+  const {
+    handleSubmit,
+    formState: { isSubmitting },
+    reset,
+  } = form;
 
-  const loadCategories = async () => {
-    try {
-      const data = await apiService.getCategories();
-      setCategories(data);
-    } catch (error) {
-      console.error("Error loading categories:", error);
-    }
-  };
+  // Reset form when image changes
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: EditFormData) => {
     if (!image) return;
 
-    setLoading(true);
-
     try {
-      const updateData = {
-        ...formData,
-        category_id: formData.category_id
-          ? parseInt(formData.category_id)
-          : null,
-      };
+      const response = await apiClient.put(`/api/images/${image.id}`, data);
 
-      await apiService.updateImage(image.id, updateData);
-
-      onSuccess();
-      onOpenChange(false);
+      if (response?.data?.success) {
+        toast({
+          title: "Success",
+          description: "Image updated successfully",
+        });
+        onSuccess();
+        onOpenChange(false);
+        reset();
+      } else {
+        throw new Error("Update failed");
+      }
     } catch (error) {
-      console.error("Error updating image:", error);
-    } finally {
-      setLoading(false);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to update image",
+        variant: "destructive",
+      });
     }
   };
 
   const getImageUrlForDialog = (image: Image) => {
-    return getImageUrl(image.filename);
+    return getImageUrl(image?.filename);
   };
 
   return (
@@ -126,122 +150,153 @@ export const ImageEditDialog: React.FC<ImageEditDialogProps> = ({
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="title">Title *</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                placeholder="Enter image title"
-                required
+        <Form {...form}>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="grid gap-4 py-4">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Title *</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Enter image title" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                placeholder="Enter image description"
-                rows={3}
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="Enter image description"
+                        rows={3}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="category">Category</Label>
-              <Select
-                value={formData.category_id}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, category_id: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">No Category</SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem
-                      key={category.id}
-                      value={category.id.toString()}
+              <FormField
+                control={form.control}
+                name="category_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select
+                      value={field.value ? field.value.toString() : ""}
+                      onValueChange={(value) =>
+                        field.onChange(value ? parseInt(value) : undefined)
+                      }
                     >
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="tags">Tags</Label>
-              <Input
-                id="tags"
-                value={formData.tags}
-                onChange={(e) =>
-                  setFormData({ ...formData, tags: e.target.value })
-                }
-                placeholder="Enter tags separated by commas"
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat?.id} value={cat?.id?.toString()}>
+                            {cat?.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
+
+              <FormField
+                control={form.control}
+                name="tags"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tags</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Enter tags separated by commas"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid gap-4">
+                <FormField
+                  control={form.control}
+                  name="is_public"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-x-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Public (visible in gallery)</FormLabel>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="is_featured"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-x-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Featured</FormLabel>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="is_hero_image"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-x-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Hero Image (for slideshow)</FormLabel>
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
-            <div className="grid gap-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="is_public"
-                  checked={formData.is_public}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, is_public: !!checked })
-                  }
-                />
-                <Label htmlFor="is_public">Public (visible in gallery)</Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="is_featured"
-                  checked={formData.is_featured}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, is_featured: !!checked })
-                  }
-                />
-                <Label htmlFor="is_featured">Featured</Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="is_hero_image"
-                  checked={formData.is_hero_image}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, is_hero_image: !!checked })
-                  }
-                />
-                <Label htmlFor="is_hero_image">
-                  Hero Image (for slideshow)
-                </Label>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Updating..." : "Update Image"}
-            </Button>
-          </DialogFooter>
-        </form>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Updating..." : "Update Image"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

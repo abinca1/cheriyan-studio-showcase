@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import Navigation from "@/components/layout/Navigation";
 import { Mail, Phone, MapPin, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,77 +9,79 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks";
 import { z } from "zod";
 import SocialMediaLinks from "@/components/business/SocialMediaLinks";
+import apiClient from "@/lib/axios";
 
 const contactSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
-  email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
-  phone: z.string().trim().max(20, "Phone must be less than 20 characters").optional(),
-  message: z.string().trim().min(1, "Message is required").max(1000, "Message must be less than 1000 characters"),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Name is required")
+    .max(100, "Name must be less than 100 characters"),
+  email: z
+    .string()
+    .trim()
+    .email("Invalid email address")
+    .max(255, "Email must be less than 255 characters"),
+  phone: z
+    .string()
+    .trim()
+    .max(20, "Phone must be less than 20 characters")
+    .optional(),
+  message: z
+    .string()
+    .trim()
+    .min(1, "Message is required")
+    .max(1000, "Message must be less than 1000 characters"),
 });
 
 type ContactFormData = z.infer<typeof contactSchema>;
 
 const ContactPage = () => {
   const { toast } = useToast();
-  const [formData, setFormData] = useState<ContactFormData>({
-    name: "",
-    email: "",
-    phone: "",
-    message: "",
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm<ContactFormData>({
+    resolver: zodResolver(contactSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      message: "",
+    },
   });
-  const [errors, setErrors] = useState<Partial<Record<keyof ContactFormData, string>>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name as keyof ContactFormData]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setErrors({});
-
-    try {
-      const validatedData = contactSchema.parse(formData);
-      
-      // Simulate form submission
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
+  // Contact form mutation
+  const contactMutation = useMutation({
+    mutationFn: async (data: ContactFormData) => {
+      // const response = await apiClient.post("/api/contact/", data);
+      // return response.data;
+    },
+    onSuccess: () => {
       toast({
         title: "Message sent successfully!",
         description: "Thank you for reaching out. I'll get back to you soon.",
       });
-
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        message: "",
+      reset();
+    },
+    onError: (error: any) => {
+      console.error("Contact form error:", error);
+      toast({
+        title: "Failed to send message",
+        description:
+          error?.response?.data?.message || "Please try again later.",
+        variant: "destructive",
       });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const fieldErrors: Partial<Record<keyof ContactFormData, string>> = {};
-        error.errors.forEach((err) => {
-          if (err.path[0]) {
-            fieldErrors[err.path[0] as keyof ContactFormData] = err.message;
-          }
-        });
-        setErrors(fieldErrors);
-        toast({
-          title: "Validation Error",
-          description: "Please check the form and try again.",
-          variant: "destructive",
-        });
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
+    },
+  });
+
+  const onSubmit = (data: ContactFormData) => {
+    contactMutation.mutate(data);
   };
 
   const contactInfo = [
@@ -113,7 +117,8 @@ const ContactPage = () => {
               Get in Touch
             </h1>
             <p className="font-body text-lg text-muted-foreground max-w-2xl mx-auto">
-              Let's discuss your photography needs and create something beautiful together
+              Let's discuss your photography needs and create something
+              beautiful together
             </p>
           </div>
 
@@ -125,8 +130,9 @@ const ContactPage = () => {
                   Contact Information
                 </h2>
                 <p className="font-body text-muted-foreground leading-relaxed mb-8">
-                  Feel free to reach out through any of the channels below. I'm always excited
-                  to discuss new projects and creative opportunities.
+                  Feel free to reach out through any of the channels below. I'm
+                  always excited to discuss new projects and creative
+                  opportunities.
                 </p>
               </div>
 
@@ -142,7 +148,9 @@ const ContactPage = () => {
                       <info.icon className="w-5 h-5 text-accent" />
                     </div>
                     <div>
-                      <div className="font-body font-semibold mb-1">{info.label}</div>
+                      <div className="font-body font-semibold mb-1">
+                        {info.label}
+                      </div>
                       <div className="font-body text-sm text-muted-foreground">
                         {info.value}
                       </div>
@@ -163,75 +171,87 @@ const ContactPage = () => {
 
             {/* Contact Form */}
             <div className="animate-scale-in">
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div>
-                  <label htmlFor="name" className="font-body text-sm font-medium mb-2 block">
+                  <label
+                    htmlFor="name"
+                    className="font-body text-sm font-medium mb-2 block"
+                  >
                     Name *
                   </label>
                   <Input
                     id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
                     placeholder="Your name"
-                    className={errors.name ? "border-destructive" : ""}
+                    className="border border-gray-300 bg-muted/30 focus:border-green-500 focus:bg-white focus-visible:ring-0 transition-colors duration-200"
+                    {...register("name")}
                   />
                   {errors.name && (
-                    <p className="text-sm text-destructive mt-1">{errors.name}</p>
+                    <p className="text-sm text-destructive mt-1">
+                      {errors.name.message}
+                    </p>
                   )}
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="font-body text-sm font-medium mb-2 block">
+                  <label
+                    htmlFor="email"
+                    className="font-body text-sm font-medium mb-2 block"
+                  >
                     Email *
                   </label>
                   <Input
                     id="email"
-                    name="email"
                     type="email"
-                    value={formData.email}
-                    onChange={handleChange}
                     placeholder="your.email@example.com"
-                    className={errors.email ? "border-destructive" : ""}
+                    className="border border-gray-300 bg-muted/30 focus:border-green-500 focus:bg-white focus-visible:ring-0 transition-colors duration-200"
+                    {...register("email")}
                   />
                   {errors.email && (
-                    <p className="text-sm text-destructive mt-1">{errors.email}</p>
+                    <p className="text-sm text-destructive mt-1">
+                      {errors.email.message}
+                    </p>
                   )}
                 </div>
 
                 <div>
-                  <label htmlFor="phone" className="font-body text-sm font-medium mb-2 block">
+                  <label
+                    htmlFor="phone"
+                    className="font-body text-sm font-medium mb-2 block"
+                  >
                     Phone
                   </label>
                   <Input
                     id="phone"
-                    name="phone"
                     type="tel"
-                    value={formData.phone}
-                    onChange={handleChange}
                     placeholder="+1 (555) 123-4567"
-                    className={errors.phone ? "border-destructive" : ""}
+                    className="border border-gray-300 bg-muted/30 focus:border-green-500 focus:bg-white focus-visible:ring-0 transition-colors duration-200"
+                    {...register("phone")}
                   />
                   {errors.phone && (
-                    <p className="text-sm text-destructive mt-1">{errors.phone}</p>
+                    <p className="text-sm text-destructive mt-1">
+                      {errors.phone.message}
+                    </p>
                   )}
                 </div>
 
                 <div>
-                  <label htmlFor="message" className="font-body text-sm font-medium mb-2 block">
+                  <label
+                    htmlFor="message"
+                    className="font-body text-sm font-medium mb-2 block"
+                  >
                     Message *
                   </label>
                   <Textarea
                     id="message"
-                    name="message"
-                    value={formData.message}
-                    onChange={handleChange}
                     placeholder="Tell me about your project..."
                     rows={6}
-                    className={errors.message ? "border-destructive" : ""}
+                    className="border border-gray-300 bg-muted/30 focus:border-green-500 focus:bg-white focus-visible:ring-0 transition-colors duration-200"
+                    {...register("message")}
                   />
                   {errors.message && (
-                    <p className="text-sm text-destructive mt-1">{errors.message}</p>
+                    <p className="text-sm text-destructive mt-1">
+                      {errors.message.message}
+                    </p>
                   )}
                 </div>
 
@@ -239,9 +259,9 @@ const ContactPage = () => {
                   type="submit"
                   size="lg"
                   className="w-full"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || contactMutation.isPending}
                 >
-                  {isSubmitting ? (
+                  {isSubmitting || contactMutation.isPending ? (
                     "Sending..."
                   ) : (
                     <>
@@ -258,24 +278,25 @@ const ContactPage = () => {
 
       {/* Footer */}
       <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-border">
-              <div className="container mx-auto max-w-6xl">
-                <div className="text-center space-y-6">
-                  {/* Social Media Links */}
-                  <div className="flex justify-center">
-                    <SocialMediaLinks
-                      className="justify-center"
-                      iconSize={24}
-                      showLabels={false}
-                    />
-                  </div>
-      
-                  {/* Copyright */}
-                  <p className="font-body text-sm text-muted-foreground">
-                    © {new Date().getFullYear()} Photography by Cheriyan. All rights reserved.
-                  </p>
-                </div>
-              </div>
-            </footer>
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center space-y-6">
+            {/* Social Media Links */}
+            <div className="flex justify-center">
+              <SocialMediaLinks
+                className="justify-center"
+                iconSize={24}
+                showLabels={false}
+              />
+            </div>
+
+            {/* Copyright */}
+            <p className="font-body text-sm text-muted-foreground">
+              © {new Date().getFullYear()} Photography by Cheriyan. All rights
+              reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
