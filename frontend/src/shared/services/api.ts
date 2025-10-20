@@ -99,6 +99,12 @@ export interface ApiError {
   detail: string;
 }
 
+interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
 class ApiService {
   private baseURL: string;
   private accessToken: string | null = null;
@@ -343,11 +349,13 @@ class ApiService {
 
   // Testimonials API
   async getTestimonials(activeOnly: boolean = true): Promise<Testimonial[]> {
-    return this.request<Testimonial[]>(`/api/testimonials/?active_only=${activeOnly}`);
+    const response = await this.request<ApiResponse<Testimonial[]>>(`/api/testimonials/?active_only=${activeOnly}`);
+    return response.data;
   }
 
   async getFeaturedTestimonials(limit: number = 6): Promise<Testimonial[]> {
-    return this.request<Testimonial[]>(`/api/testimonials/featured?limit=${limit}`);
+    const response = await this.request<ApiResponse<Testimonial[]>>(`/api/testimonials/featured?limit=${limit}`);
+    return response.data;
   }
 
   async createTestimonial(testimonial: Omit<Testimonial, 'id' | 'created_at' | 'updated_at'>): Promise<Testimonial> {
@@ -397,27 +405,30 @@ class ApiService {
 
   // Social Media API
   async getSocialMediaLinks(activeOnly: boolean = true): Promise<SocialMedia[]> {
-    return this.request<SocialMedia[]>(`/api/social-media/?active_only=${activeOnly}`);
+    const response = await this.request<ApiResponse<SocialMedia[]>>(`/api/social-media/?active_only=${activeOnly}`);
+    return response.data;
   }
 
   async createSocialMediaLink(socialMedia: Omit<SocialMedia, 'id' | 'created_at' | 'updated_at'>): Promise<SocialMedia> {
-    return this.request<SocialMedia>('/api/social-media/', {
+    const response = await this.request<ApiResponse<SocialMedia>>('/api/social-media/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(socialMedia),
     });
+    return response.data;
   }
 
   async updateSocialMediaLink(id: number, socialMedia: Partial<Omit<SocialMedia, 'id' | 'created_at' | 'updated_at'>>): Promise<SocialMedia> {
-    return this.request<SocialMedia>(`/api/social-media/${id}`, {
+    const response = await this.request<ApiResponse<SocialMedia>>(`/api/social-media/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(socialMedia),
     });
+    return response.data;
   }
 
   async deleteSocialMediaLink(id: number): Promise<void> {
