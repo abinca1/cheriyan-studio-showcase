@@ -6,7 +6,7 @@ from starlette.responses import JSONResponse
 from starlette import status as http_status
 
 from app.core.config import settings
-from app.routers import auth, images, categories, testimonials, hero_slides, social_media
+from app.routers import auth, images, categories, testimonials, hero_slides, social_media, business_hours, contact_details
 from app.utils.api_response import error_response
 
 app = FastAPI(
@@ -83,6 +83,8 @@ app.include_router(categories.router, prefix="/api/categories", tags=["categorie
 app.include_router(testimonials.router, prefix="/api/testimonials", tags=["testimonials"])
 app.include_router(hero_slides.router, prefix="/api/hero-slides", tags=["hero-slides"])
 app.include_router(social_media.router, prefix="/api/social-media", tags=["social-media"])
+app.include_router(business_hours.router, prefix="/api/business-hours", tags=["business-hours"])
+app.include_router(contact_details.router, prefix="/api/contact-details", tags=["contact-details"])
 
 @app.get("/")
 async def root():

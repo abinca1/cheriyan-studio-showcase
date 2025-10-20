@@ -10,6 +10,7 @@ class ImageBase(BaseModel):
     is_featured: bool = False
     is_public: bool = True
     is_hero_image: bool = False
+    is_profile_picture: bool = False
     category_id: Optional[int] = None
     is_thumbnail: bool = False
 
@@ -24,6 +25,7 @@ class ImageUpdate(BaseModel):
     is_featured: Optional[bool] = None
     is_public: Optional[bool] = None
     is_hero_image: Optional[bool] = None
+    is_profile_picture: Optional[bool] = None
     category_id: Optional[int] = None
     is_thumbnail: Optional[bool] = None
 
@@ -59,6 +61,7 @@ class ImageOut(ImageBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     is_thumbnail: bool = False
+    is_profile_picture: bool = False
 
     class Config:
         orm_mode = True

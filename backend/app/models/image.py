@@ -20,6 +20,7 @@ class Image(Base):
     is_public = Column(Boolean, default=True)
     is_thumbnail = Column(Boolean, default=False)
     is_hero_image = Column(Boolean, default=False)  # New field for hero section
+    is_profile_picture = Column(Boolean, default=False)  # New field for profile picture
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

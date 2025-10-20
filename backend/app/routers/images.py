@@ -71,6 +71,7 @@ async def upload_image(
     is_featured: bool = Form(False),
     is_public: bool = Form(True),
     is_hero_image: bool = Form(False),
+    is_profile_picture: bool = Form(False),
     is_thumbnail: bool = Form(False),
     category_id: Optional[int] = Form(None),
     current_user: User = Depends(AuthService.get_current_user),
@@ -86,6 +87,7 @@ async def upload_image(
         is_featured=is_featured,
         is_public=is_public,
         is_hero_image=is_hero_image,
+        is_profile_picture=is_profile_picture,
         category_id=category_id,
         is_thumbnail=is_thumbnail
     )
