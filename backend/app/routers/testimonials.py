@@ -7,7 +7,7 @@ from app.models.testimonial import Testimonial
 from app.schemas.testimonial import Testimonial as TestimonialSchema, TestimonialCreate, TestimonialUpdate
 from app.services.auth_service import get_current_admin_user
 from app.models.user import User
-from app.utils.api_response import ok, created
+from app.utils.api_response import ok, created, error_response
 
 router = APIRouter()
 
@@ -46,7 +46,12 @@ def get_testimonial(
     """Get a specific testimonial"""
     testimonial = db.query(Testimonial).filter(Testimonial.id == testimonial_id).first()
     if not testimonial:
-        raise HTTPException(status_code=404, detail="Testimonial not found")
+        return error_response(
+            status=404,
+            code="TESTIMONIAL_NOT_FOUND",
+            description="Testimonial not found",
+            message="The requested testimonial does not exist."
+        )
     return ok(testimonial, message="Testimonial details retrieved.")
 
 @router.post("/")
@@ -72,7 +77,12 @@ def update_testimonial(
     """Update a testimonial (admin only)"""
     db_testimonial = db.query(Testimonial).filter(Testimonial.id == testimonial_id).first()
     if not db_testimonial:
-        raise HTTPException(status_code=404, detail="Testimonial not found")
+        return error_response(
+            status=404,
+            code="TESTIMONIAL_NOT_FOUND",
+            description="Testimonial not found",
+            message="The requested testimonial does not exist."
+        )
 
     update_data = testimonial.dict(exclude_unset=True)
     for field, value in update_data.items():
@@ -91,7 +101,12 @@ def delete_testimonial(
     """Delete a testimonial (admin only)"""
     db_testimonial = db.query(Testimonial).filter(Testimonial.id == testimonial_id).first()
     if not db_testimonial:
-        raise HTTPException(status_code=404, detail="Testimonial not found")
+        return error_response(
+            status=404,
+            code="TESTIMONIAL_NOT_FOUND",
+            description="Testimonial not found",
+            message="The requested testimonial does not exist."
+        )
     
     db.delete(db_testimonial)
     db.commit()

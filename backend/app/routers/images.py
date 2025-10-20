@@ -7,7 +7,7 @@ from app.schemas.image import Image, ImageOut, ImageCreate, ImageUpdate
 from app.schemas.user import User
 from app.services.auth_service import AuthService
 from app.services.image_service import ImageService
-from app.utils.api_response import ok, created
+from app.utils.api_response import ok, created, error_response
 
 router = APIRouter()
 
@@ -55,7 +55,12 @@ async def get_image(
     image_service = ImageService(db)
     image = await image_service.get_image(image_id)
     if not image:
-        raise HTTPException(status_code=404, detail="Image not found")
+        return error_response(
+            status=404,
+            code="IMAGE_NOT_FOUND",
+            description="Image not found",
+            message="The requested image does not exist."
+        )
 
     # Convert to ImageOut schema (includes is_thumbnail)
     from app.schemas.image import ImageOut

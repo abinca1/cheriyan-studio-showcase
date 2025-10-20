@@ -6,7 +6,7 @@ from app.db.session import get_db
 from app.schemas.business_hours import BusinessHours, BusinessHoursCreate, BusinessHoursUpdate, BusinessHoursOut
 from app.schemas.user import User
 from app.services.auth_service import AuthService
-from app.utils.api_response import ok, created
+from app.utils.api_response import ok, created, error_response
 
 router = APIRouter()
 
@@ -33,7 +33,12 @@ async def get_business_hours_by_day(
     ).first()
     
     if not business_hours:
-        raise HTTPException(status_code=404, detail="Business hours not found for this day")
+        return error_response(
+            status=404,
+            code="BUSINESS_HOURS_NOT_FOUND",
+            description="Business hours not found for this day",
+            message="Business hours for the specified day do not exist."
+        )
     
     return ok(business_hours, message="Business hours retrieved.")
 
@@ -52,9 +57,11 @@ async def create_business_hours(
     ).first()
     
     if existing:
-        raise HTTPException(
-            status_code=400, 
-            detail="Business hours for this day already exist. Use PUT to update."
+        return error_response(
+            status=400,
+            code="BUSINESS_HOURS_ALREADY_EXISTS",
+            description="Business hours for this day already exist",
+            message="Business hours for this day already exist. Use PUT to update."
         )
     
     business_hours = BusinessHoursModel(**business_hours_data.dict())
@@ -79,7 +86,12 @@ async def update_business_hours(
     ).first()
     
     if not business_hours:
-        raise HTTPException(status_code=404, detail="Business hours not found for this day")
+        return error_response(
+            status=404,
+            code="BUSINESS_HOURS_NOT_FOUND",
+            description="Business hours not found for this day",
+            message="Business hours for the specified day do not exist."
+        )
     
     update_data = business_hours_data.dict(exclude_unset=True)
     for field, value in update_data.items():
@@ -104,7 +116,12 @@ async def delete_business_hours(
     ).first()
     
     if not business_hours:
-        raise HTTPException(status_code=404, detail="Business hours not found for this day")
+        return error_response(
+            status=404,
+            code="BUSINESS_HOURS_NOT_FOUND",
+            description="Business hours not found for this day",
+            message="Business hours for the specified day do not exist."
+        )
     
     db.delete(business_hours)
     db.commit()

@@ -6,7 +6,7 @@ from app.db.session import get_db
 from app.schemas.contact_details import ContactDetails, ContactDetailsCreate, ContactDetailsUpdate, ContactDetailsOut
 from app.schemas.user import User
 from app.services.auth_service import AuthService
-from app.utils.api_response import ok, created
+from app.utils.api_response import ok, created, error_response
 
 router = APIRouter()
 
@@ -33,7 +33,12 @@ async def get_contact_detail(
     ).first()
     
     if not contact_detail:
-        raise HTTPException(status_code=404, detail="Contact detail not found")
+        return error_response(
+            status=404,
+            code="CONTACT_DETAIL_NOT_FOUND",
+            description="Contact detail not found",
+            message="The requested contact detail does not exist."
+        )
     
     return ok(contact_detail, message="Contact detail retrieved.")
 
@@ -49,9 +54,11 @@ async def create_contact_details(
     # Check if contact details already exist
     existing = db.query(ContactDetailsModel).first()
     if existing:
-        raise HTTPException(
-            status_code=400, 
-            detail="Contact details already exist. Use PUT to update."
+        return error_response(
+            status=400,
+            code="CONTACT_DETAILS_ALREADY_EXIST",
+            description="Contact details already exist",
+            message="Contact details already exist. Use PUT to update."
         )
     
     contact_details = ContactDetailsModel(**contact_data.dict())
@@ -76,7 +83,12 @@ async def update_contact_details(
     ).first()
     
     if not contact_details:
-        raise HTTPException(status_code=404, detail="Contact details not found")
+        return error_response(
+            status=404,
+            code="CONTACT_DETAILS_NOT_FOUND",
+            description="Contact details not found",
+            message="The requested contact details do not exist."
+        )
     
     update_data = contact_data.dict(exclude_unset=True)
     for field, value in update_data.items():
@@ -101,7 +113,12 @@ async def delete_contact_details(
     ).first()
     
     if not contact_details:
-        raise HTTPException(status_code=404, detail="Contact details not found")
+        return error_response(
+            status=404,
+            code="CONTACT_DETAILS_NOT_FOUND",
+            description="Contact details not found",
+            message="The requested contact details do not exist."
+        )
     
     db.delete(contact_details)
     db.commit()

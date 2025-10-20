@@ -8,10 +8,11 @@ from app.models.image import Image
 from app.schemas.hero_slide import HeroSlide as HeroSlideSchema, HeroSlideCreate, HeroSlideUpdate
 from app.services.auth_service import get_current_admin_user
 from app.models.user import User
+from app.utils.api_response import ok, created, error_response
 
 router = APIRouter()
 
-@router.get("/", response_model=List[HeroSlideSchema])
+@router.get("/")
 def get_hero_slides(
     skip: int = 0,
     limit: int = 10,
@@ -24,9 +25,9 @@ def get_hero_slides(
         query = query.filter(HeroSlide.is_active == True)
     
     slides = query.order_by(HeroSlide.sort_order, HeroSlide.created_at.desc()).offset(skip).limit(limit).all()
-    return slides
+    return ok(slides, message="Hero slides retrieved successfully.")
 
-@router.get("/{slide_id}", response_model=HeroSlideSchema)
+@router.get("/{slide_id}")
 def get_hero_slide(
     slide_id: int,
     db: Session = Depends(get_db)
@@ -34,10 +35,15 @@ def get_hero_slide(
     """Get a specific hero slide"""
     slide = db.query(HeroSlide).filter(HeroSlide.id == slide_id).first()
     if not slide:
-        raise HTTPException(status_code=404, detail="Hero slide not found")
-    return slide
+        return error_response(
+            status=404,
+            code="HERO_SLIDE_NOT_FOUND",
+            description="Hero slide not found",
+            message="The requested hero slide does not exist."
+        )
+    return ok(slide, message="Hero slide details retrieved successfully.")
 
-@router.post("/", response_model=HeroSlideSchema)
+@router.post("/")
 def create_hero_slide(
     slide: HeroSlideCreate,
     db: Session = Depends(get_db),
@@ -47,15 +53,20 @@ def create_hero_slide(
     # Verify that the image exists
     image = db.query(Image).filter(Image.id == slide.image_id).first()
     if not image:
-        raise HTTPException(status_code=404, detail="Image not found")
+        return error_response(
+            status=404,
+            code="IMAGE_NOT_FOUND",
+            description="Image not found",
+            message="The specified image does not exist."
+        )
 
     db_slide = HeroSlide(**slide.dict())
     db.add(db_slide)
     db.commit()
     db.refresh(db_slide)
-    return db_slide
+    return created(db_slide, message="Hero slide created successfully.")
 
-@router.put("/{slide_id}", response_model=HeroSlideSchema)
+@router.put("/{slide_id}")
 def update_hero_slide(
     slide_id: int,
     slide: HeroSlideUpdate,
@@ -65,7 +76,12 @@ def update_hero_slide(
     """Update a hero slide (admin only)"""
     db_slide = db.query(HeroSlide).filter(HeroSlide.id == slide_id).first()
     if not db_slide:
-        raise HTTPException(status_code=404, detail="Hero slide not found")
+        return error_response(
+            status=404,
+            code="HERO_SLIDE_NOT_FOUND",
+            description="Hero slide not found",
+            message="The requested hero slide does not exist."
+        )
 
     update_data = slide.dict(exclude_unset=True)
 
@@ -73,14 +89,19 @@ def update_hero_slide(
     if 'image_id' in update_data:
         image = db.query(Image).filter(Image.id == update_data['image_id']).first()
         if not image:
-            raise HTTPException(status_code=404, detail="Image not found")
+            return error_response(
+                status=404,
+                code="IMAGE_NOT_FOUND",
+                description="Image not found",
+                message="The specified image does not exist."
+            )
 
     for field, value in update_data.items():
         setattr(db_slide, field, value)
 
     db.commit()
     db.refresh(db_slide)
-    return db_slide
+    return ok(db_slide, message="Hero slide updated successfully.")
 
 @router.delete("/{slide_id}")
 def delete_hero_slide(
@@ -91,8 +112,13 @@ def delete_hero_slide(
     """Delete a hero slide (admin only)"""
     db_slide = db.query(HeroSlide).filter(HeroSlide.id == slide_id).first()
     if not db_slide:
-        raise HTTPException(status_code=404, detail="Hero slide not found")
+        return error_response(
+            status=404,
+            code="HERO_SLIDE_NOT_FOUND",
+            description="Hero slide not found",
+            message="The requested hero slide does not exist."
+        )
     
     db.delete(db_slide)
     db.commit()
-    return {"message": "Hero slide deleted successfully"}
+    return ok(message="Hero slide deleted successfully.")

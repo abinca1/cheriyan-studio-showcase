@@ -7,7 +7,7 @@ from app.models.category import Category
 from app.schemas.category import Category as CategorySchema, CategoryCreate, CategoryUpdate
 from app.services.auth_service import get_current_admin_user
 from app.models.user import User
-from app.utils.api_response import ok, created
+from app.utils.api_response import ok, created, error_response
 
 router = APIRouter()
 
@@ -29,7 +29,12 @@ def get_category(
     """Get a specific category"""
     category = db.query(Category).filter(Category.id == category_id).first()
     if not category:
-        raise HTTPException(status_code=404, detail="Category not found")
+        return error_response(
+            status=404,
+            code="CATEGORY_NOT_FOUND",
+            description="Category not found",
+            message="The requested category does not exist."
+        )
     return ok(category, message="Category details retrieved successfully.")
 
 @router.post("/")
@@ -44,7 +49,12 @@ def create_category(
         (Category.name == category.name) | (Category.slug == category.slug)
     ).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Category with this name or slug already exists")
+        return error_response(
+            status=400,
+            code="CATEGORY_ALREADY_EXISTS",
+            description="Category with this name or slug already exists",
+            message="A category with this name or slug already exists."
+        )
     
     db_category = Category(**category.dict())
     db.add(db_category)
@@ -62,7 +72,12 @@ def update_category(
     """Update a category (admin only)"""
     db_category = db.query(Category).filter(Category.id == category_id).first()
     if not db_category:
-        raise HTTPException(status_code=404, detail="Category not found")
+        return error_response(
+            status=404,
+            code="CATEGORY_NOT_FOUND",
+            description="Category not found",
+            message="The requested category does not exist."
+        )
 
     update_data = category.dict(exclude_unset=True)
     for field, value in update_data.items():
@@ -81,7 +96,12 @@ def delete_category(
     """Delete a category (admin only)"""
     db_category = db.query(Category).filter(Category.id == category_id).first()
     if not db_category:
-        raise HTTPException(status_code=404, detail="Category not found")
+        return error_response(
+            status=404,
+            code="CATEGORY_NOT_FOUND",
+            description="Category not found",
+            message="The requested category does not exist."
+        )
     
     db.delete(db_category)
     db.commit()

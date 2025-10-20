@@ -7,7 +7,7 @@ from app.models.social_media import SocialMedia
 from app.schemas.social_media import SocialMedia as SocialMediaSchema, SocialMediaCreate, SocialMediaUpdate
 from app.services.auth_service import get_current_admin_user
 from app.models.user import User
-from app.utils.api_response import ok, created
+from app.utils.api_response import ok, created, error_response
 
 router = APIRouter()
 
@@ -32,9 +32,11 @@ def get_social_media_link(
     """Get a specific social media link"""
     social_media = db.query(SocialMedia).filter(SocialMedia.id == social_media_id).first()
     if not social_media:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Social media link not found"
+        return error_response(
+            status=404,
+            code="SOCIAL_MEDIA_LINK_NOT_FOUND",
+            description="Social media link not found",
+            message="The requested social media link does not exist."
         )
     return ok(social_media, message="Social media link details retrieved.")
 
@@ -61,9 +63,11 @@ def update_social_media_link(
     """Update a social media link (admin only)"""
     db_social_media = db.query(SocialMedia).filter(SocialMedia.id == social_media_id).first()
     if not db_social_media:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Social media link not found"
+        return error_response(
+            status=404,
+            code="SOCIAL_MEDIA_LINK_NOT_FOUND",
+            description="Social media link not found",
+            message="The requested social media link does not exist."
         )
     
     update_data = social_media_update.dict(exclude_unset=True)
@@ -83,9 +87,11 @@ def delete_social_media_link(
     """Delete a social media link (admin only)"""
     db_social_media = db.query(SocialMedia).filter(SocialMedia.id == social_media_id).first()
     if not db_social_media:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Social media link not found"
+        return error_response(
+            status=404,
+            code="SOCIAL_MEDIA_LINK_NOT_FOUND",
+            description="Social media link not found",
+            message="The requested social media link does not exist."
         )
     
     db.delete(db_social_media)
