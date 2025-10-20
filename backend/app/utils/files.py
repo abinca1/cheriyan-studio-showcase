@@ -22,7 +22,13 @@ async def save_upload_file(file: UploadFile, filename: str) -> str:
             detail=f"Error saving file: {str(e)}"
         )
     
-    return file_path
+    # Return path without 'app/' prefix for serving
+    # Remove 'app/' from the beginning of the path if it exists
+    relative_path = file_path
+    if file_path.startswith('app/'):
+        relative_path = file_path[4:]  # Remove 'app/' prefix
+    
+    return relative_path
 
 def delete_file(file_path: str) -> bool:
     """Delete a file from the filesystem"""
