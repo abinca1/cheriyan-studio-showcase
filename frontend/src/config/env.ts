@@ -12,8 +12,8 @@ const getConfig = (): Config => {
   const apiUrl =
     import.meta.env.VITE_API_URL ||
     (import.meta.env.DEV
-      ? "https://cheriyan-studio-api.onrender.com"
-      : "https://cheriyan-studio-api.onrender.com");
+      ? "http://localhost:8000"
+      : "http://localhost:8000");
 
   const environment = import.meta.env.NODE_ENV || "development";
 
