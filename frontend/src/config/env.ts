@@ -13,7 +13,7 @@ const getConfig = (): Config => {
     import.meta.env.VITE_API_URL ||
     (import.meta.env.DEV
       ? "http://localhost:8000"
-      : "http://localhost:8000");
+      : "http://www.cheriyanphotography.com");
 
   const environment = import.meta.env.NODE_ENV || "development";
 
