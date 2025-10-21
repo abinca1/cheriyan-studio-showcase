@@ -1,0 +1,31 @@
+// Environment configuration for different deployment environments
+
+interface Config {
+  apiUrl: string;
+  environment: string;
+  isDevelopment: boolean;
+  isProduction: boolean;
+}
+
+const getConfig = (): Config => {
+  // Get API URL from environment variable or use default
+  const apiUrl =
+    import.meta.env.VITE_API_URL ||
+    (import.meta.env.DEV
+      ? "https://cheriyan-studio-api.onrender.com"
+      : "https://cheriyan-studio-api.onrender.com");
+
+  const environment = import.meta.env.NODE_ENV || "development";
+
+  return {
+    apiUrl,
+    environment,
+    isDevelopment: environment === "development",
+    isProduction: environment === "production",
+  };
+};
+
+export const config = getConfig();
+
+// Export individual values for convenience
+export const { apiUrl, environment, isDevelopment, isProduction } = config;
