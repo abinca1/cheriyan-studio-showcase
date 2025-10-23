@@ -15,14 +15,19 @@ app = FastAPI(
     description="Cheriyan Studio Showcase API"
 )
 
+origins = [
+    "https://www.cheriyanphotography.com",
+    "https://cheriyanphotography.com",
+    "http://localhost:4200",  # add your frontend dev url if needed
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=origins,  # or ["*"] to allow all (not recommended in production)
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+    allow_methods=["*"],     # allow all HTTP methods (GET, POST, etc.)
+    allow_headers=["*"],     # allow all headers
 )
-
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 

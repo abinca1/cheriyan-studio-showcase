@@ -2,7 +2,7 @@ import axios, { AxiosError } from "axios";
 import { apiUrl } from "@/config/env";
 
 const apiClient = axios.create({
-  baseURL: apiUrl,
+  baseURL: "https://www.cheriyanphotography.com/api",
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
