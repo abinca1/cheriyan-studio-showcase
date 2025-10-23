@@ -38,12 +38,14 @@ import { toast } from "@/hooks";
 // Zod validation schema
 const editSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
-  category_id: z.any().optional(),
-  tags: z.string().optional(),
+  description: z.any().optional(),
+  category_id: z.number().min(1, "Category is required"),
+  tags: z.any().optional(),
   is_featured: z.boolean().default(false),
   is_public: z.boolean().default(true),
   is_hero_image: z.boolean().default(false),
+  is_profile_picture: z.boolean().default(false),
+  is_thumbnail: z.boolean().default(false),
 });
 
 type EditFormData = z.infer<typeof editSchema>;
@@ -87,6 +89,8 @@ const ImageEditDialog: React.FC<ImageEditDialogProps> = ({
       is_featured: false,
       is_public: false,
       is_hero_image: false,
+      is_profile_picture: false,
+      is_thumbnail: false,
     },
     values: image,
   });
@@ -132,171 +136,208 @@ const ImageEditDialog: React.FC<ImageEditDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[600px] h-[90vh] flex flex-col p-0 rounded-lg">
+        <DialogHeader className="px-6 py-4 border-b bg-white flex-shrink-0 rounded-t-lg">
           <DialogTitle>Edit Image</DialogTitle>
           <DialogDescription>
             Update the image details and settings.
           </DialogDescription>
         </DialogHeader>
 
-        {image && (
-          <div className="mb-4">
-            <img
-              src={getImageUrlForDialog(image)}
-              alt={image.title}
-              className="w-full h-48 object-cover rounded-lg border"
-            />
-          </div>
-        )}
-
-        <Form {...form}>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid gap-4 py-4">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title *</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Enter image title" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          {image && (
+            <div className="mb-4 w-full">
+              <img
+                src={getImageUrlForDialog(image)}
+                alt={image.title}
+                className="w-full max-h-80 object-contain rounded-lg border bg-gray-50"
               />
+            </div>
+          )}
 
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="Enter image description"
-                        rows={3}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="category_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <Select
-                      value={field.value ? field.value.toString() : ""}
-                      onValueChange={(value) =>
-                        field.onChange(value ? parseInt(value) : undefined)
-                      }
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories.map((cat) => (
-                          <SelectItem key={cat?.id} value={cat?.id?.toString()}>
-                            {cat?.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="tags"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tags</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Enter tags separated by commas"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+          <Form {...form}>
+            <form onSubmit={handleSubmit(onSubmit)}>
               <div className="grid gap-4">
                 <FormField
                   control={form.control}
-                  name="is_public"
+                  name="title"
                   render={({ field }) => (
-                    <FormItem className="flex items-center space-x-2">
+                    <FormItem>
+                      <FormLabel>Title *</FormLabel>
                       <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <Input {...field} placeholder="Enter image title" />
                       </FormControl>
-                      <FormLabel>Public (visible in gallery)</FormLabel>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
 
                 <FormField
                   control={form.control}
-                  name="is_featured"
+                  name="description"
                   render={({ field }) => (
-                    <FormItem className="flex items-center space-x-2">
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
+                        <Textarea
+                          {...field}
+                          placeholder="Enter image description"
+                          rows={3}
                         />
                       </FormControl>
-                      <FormLabel>Featured</FormLabel>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="category_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-gray-600">Category</FormLabel>
+                      <Select
+                        value={field.value ? field.value.toString() : ""}
+                        onValueChange={(value) =>
+                          field.onChange(value ? parseInt(value) : undefined)
+                        }
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {categories.map((cat) => (
+                            <SelectItem
+                              key={cat?.id}
+                              value={cat?.id?.toString()}
+                            >
+                              {cat?.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
 
                 <FormField
                   control={form.control}
-                  name="is_hero_image"
+                  name="tags"
                   render={({ field }) => (
-                    <FormItem className="flex items-center space-x-2">
+                    <FormItem>
+                      <FormLabel>Tags</FormLabel>
                       <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
+                        <Input
+                          {...field}
+                          placeholder="Enter tags separated by commas"
                         />
                       </FormControl>
-                      <FormLabel>Hero Image (for slideshow)</FormLabel>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                <div className="grid gap-4">
+                  <FormField
+                    control={form.control}
+                    name="is_public"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel>Public (visible in gallery)</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="is_featured"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel>Featured</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="is_hero_image"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel>Hero Image (for slideshow)</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="is_profile_picture"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel>Profile Picture</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="is_thumbnail"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel>Thumbnail Image</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
-            </div>
+            </form>
+          </Form>
+        </div>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Updating..." : "Update Image"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        <DialogFooter className="px-6 py-4 border-t bg-white flex-shrink-0 rounded-b-lg">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Updating..." : "Update Image"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

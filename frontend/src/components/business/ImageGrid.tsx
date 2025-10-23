@@ -83,11 +83,11 @@ const ImageGrid: React.FC<ImageGridProps> = ({
           className="overflow-hidden group hover:shadow-lg transition-shadow"
         >
           {/* Image */}
-          <div className="aspect-square relative overflow-hidden bg-gray-100">
+          <div className="w-full h-[320px] relative overflow-hidden bg-gray-100">
             <img
               src={`${apiUrl}/${image?.file_path}`}
               alt={image.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+              className="w-full h-full  group-hover:scale-105 transition-transform duration-200"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src =

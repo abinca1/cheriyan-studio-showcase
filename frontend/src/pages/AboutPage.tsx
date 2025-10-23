@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import SocialMediaLinks from "@/components/business/SocialMediaLinks";
 import photographerPortrait from "@/assets/photographer-portrait.jpg";
 import apiClient from "@/library/axios";
+import { getImageUrl } from "@/utils/imageUtils";
 
 const AboutPage = () => {
   const stats = [
@@ -32,9 +33,28 @@ const AboutPage = () => {
       }
     },
   });
+  const {
+    data: profileImages = [],
+    isLoading: profileImagesLoading,
+    error: profileImagesError,
+  } = useQuery({
+    queryKey: ["profile-images"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/images/");
+      if (response?.data?.success) {
+        const images = response.data.data;
+        return images.filter((img) => img.is_profile_picture)[0];
+      } else {
+        return {};
+      }
+    },
+  });
 
-  if (testimonialsError) {
-    console.error("Error loading testimonials:", testimonialsError);
+  if (testimonialsError || profileImagesError) {
+    console.error("Error loading data:", {
+      testimonialsError,
+      profileImagesError,
+    });
   }
 
   return (
@@ -57,12 +77,22 @@ const AboutPage = () => {
           {/* Bio Section */}
           <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
             <div className="relative animate-scale-in">
-              <div className="aspect-[3/4] overflow-hidden rounded-sm">
-                <img
-                  src={photographerPortrait}
-                  alt="Cheriyan Simon"
-                  className="w-full h-full object-cover"
-                />
+              <div className="aspect-[3/4] overflow-hidden rounded-sm bg-muted">
+                {profileImagesLoading ? (
+                  <div className="w-full h-full bg-muted animate-pulse" />
+                ) : profileImages?.filename ? (
+                  <img
+                    src={getImageUrl(profileImages.filename)}
+                    alt={profileImages.title || "Cheriyan Simon"}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <img
+                    src={photographerPortrait}
+                    alt="Cheriyan Simon"
+                    className="w-full h-full object-cover"
+                  />
+                )}
               </div>
             </div>
 

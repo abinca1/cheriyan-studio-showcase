@@ -6,33 +6,65 @@ import { NAVIGATION_LINKS, APP_NAME } from "@/constants";
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isOverLightContent, setIsOverLightContent] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
+    let ticking = false;
+
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollY = window.scrollY;
+          setIsScrolled(scrollY > 20);
+
+          // Check if we're over light content sections (after hero section)
+          setIsOverLightContent(scrollY > window.innerHeight * 0.8);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const navLinks = NAVIGATION_LINKS;
+  const isHomePage = location.pathname === "/";
+
+  // Determine header classes based on route and scroll state
+  const getHeaderClasses = () => {
+    // Only home page is transparent when not scrolled
+    if (!isScrolled && isHomePage) {
+      return "bg-transparent border-b border-transparent";
+    }
+
+    // Only home page gets glass effects
+    if (isHomePage) {
+      // Home page: glass effect over hero, solid over content
+      return isOverLightContent
+        ? "bg-gray-900/95 backdrop-blur-lg border-b border-gray-700/50 shadow-lg"
+        : "bg-black/20 backdrop-blur-lg border-b border-white/20 shadow-lg";
+    }
+
+    // All other pages get solid background (no glass effect)
+    return "bg-gray-900/95 border-b border-gray-700/50 shadow-lg";
+  };
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? "bg-background/95 backdrop-blur-md border-b border-border"
-          : "bg-transparent"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${getHeaderClasses()}`}
+      style={{
+        willChange: isScrolled ? "backdrop-filter, background-color" : "auto",
+      }}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-12">
           <Link
             to="/"
-            className="font-display text-2xl font-semibold tracking-tight hover:text-accent transition-colors"
+            className={`font-display text-xl font-semibold tracking-tight transition-colors duration-500 ease-in-out text-white hover:text-gray-300`}
           >
             {APP_NAME}
           </Link>
@@ -43,15 +75,15 @@ const Navigation = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`font-body text-sm tracking-wide transition-colors relative group ${
+                className={`font-body text-sm tracking-wide transition-colors duration-500 ease-in-out relative group ${
                   location.pathname === link.path
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "text-white"
+                    : "text-white/80 hover:text-white"
                 }`}
               >
                 {link.name}
                 <span
-                  className={`absolute -bottom-1 left-0 w-full h-0.5 bg-accent transition-transform origin-left ${
+                  className={`absolute -bottom-1 left-0 w-full h-0.5 bg-accent transition-transform duration-300 ease-in-out origin-left ${
                     location.pathname === link.path
                       ? "scale-x-100"
                       : "scale-x-0 group-hover:scale-x-100"
@@ -65,7 +97,7 @@ const Navigation = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="md:hidden text-white hover:text-white hover:bg-white/10"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? (
@@ -78,17 +110,19 @@ const Navigation = () => {
 
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border animate-fade-in">
-            <div className="flex flex-col space-y-4">
+          <div
+            className={`md:hidden py-3 border-t animate-fade-in transition-colors duration-500 ease-in-out border-gray-700`}
+          >
+            <div className="flex flex-col space-y-3">
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`font-body text-sm tracking-wide transition-colors px-4 py-2 ${
+                  className={`font-body text-sm tracking-wide transition-colors duration-500 ease-in-out px-4 py-2 ${
                     location.pathname === link.path
-                      ? "text-foreground bg-muted"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      ? "text-white bg-gray-700/50"
+                      : "text-white/80 hover:text-white hover:bg-gray-700/30"
                   }`}
                 >
                   {link.name}

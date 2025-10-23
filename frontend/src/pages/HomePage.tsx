@@ -6,11 +6,8 @@ import Navigation from "@/components/layout/Navigation";
 import HeroSlideshow from "@/components/business/HeroSlideshow";
 import { useQuery } from "@tanstack/react-query";
 import SocialMediaLinks from "@/components/business/SocialMediaLinks";
-import fashionImage from "@/assets/gallery-fashion-1.jpg";
-import weddingImage from "@/assets/gallery-wedding-1.jpg";
-import portraitImage from "@/assets/gallery-portrait-1.jpg";
-import productImage from "@/assets/gallery-product-1.jpg";
 import apiClient from "@/library/axios";
+import { getImageUrl } from "@/utils/imageUtils";
 
 const HomePage = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -52,18 +49,39 @@ const HomePage = () => {
     },
   });
 
+  //Fetch Featured Work
+
+  const {
+    data: featuredWork = [],
+    isLoading: featuredWorkLoading,
+    error: featuredWorkError,
+  } = useQuery({
+    queryKey: ["featuredWork-images"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/images/");
+      if (response?.data?.success) {
+        const images = response.data.data;
+        return images.filter((img) => img.is_thumbnail);
+      } else {
+        return [];
+      }
+    },
+  });
+
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
   // Handle loading and error states
-  const isLoading = heroImagesLoading || testimonialsLoading;
-  const hasError = heroImagesError || testimonialsError;
+  const isLoading =
+    heroImagesLoading || testimonialsLoading || featuredWorkLoading;
+  const hasError = heroImagesError || testimonialsError || featuredWorkError;
 
   if (hasError) {
     console.error("Error loading data:", {
       heroImagesError,
       testimonialsError,
+      featuredWorkError,
     });
   }
 
@@ -78,7 +96,7 @@ const HomePage = () => {
           <HeroSlideshow images={heroImagesData} interval={5000} />
         )}
 
-        <div
+        {/* <div
           className={`relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto transition-all duration-1000 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           }`}
@@ -113,7 +131,7 @@ const HomePage = () => {
               <Link to="/contact">Get in Touch</Link>
             </Button>
           </div>
-        </div>
+        </div> */}
 
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
           <div className="w-6 h-10 border-2 border-white/50 rounded-full flex items-start justify-center p-2">
@@ -134,35 +152,48 @@ const HomePage = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { name: "Fashion", image: fashionImage },
-              { name: "Wedding", image: weddingImage },
-              { name: "Portrait", image: portraitImage },
-              { name: "Product", image: productImage },
-            ].map((category, index) => (
-              <Link
-                key={category.name}
-                to="/gallery"
-                className="group relative aspect-[3/4] overflow-hidden rounded-lg bg-muted hover:shadow-lg transition-all duration-300"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <img
-                  src={category.image}
-                  alt={`${category.name} Photography`}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          {featuredWorkLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, index) => (
+                <div
+                  key={index}
+                  className="aspect-[3/4] bg-muted rounded-lg animate-pulse"
+                  style={{ animationDelay: `${index * 100}ms` }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10" />
-                <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
-                  <h3 className="text-2xl font-semibold text-white mb-2 transform transition-transform group-hover:translate-y-[-4px]">
-                    {category.name}
-                  </h3>
-                  <p className="text-white/80 text-sm">View Collection</p>
-                </div>
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
-              </Link>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : featuredWork.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {featuredWork.slice(0, 4).map((work, index) => (
+                <Link
+                  key={work.id}
+                  to="/gallery"
+                  className="group relative aspect-[3/4] overflow-hidden rounded-lg bg-muted hover:shadow-lg transition-all duration-300"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <img
+                    src={getImageUrl(work.filename)}
+                    alt={work.title || `${work.category} Photography`}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10" />
+                  <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
+                    <h3 className="text-2xl font-semibold text-white mb-2 transform transition-transform group-hover:translate-y-[-4px]">
+                      {work.category || "Featured Work"}
+                    </h3>
+                    <p className="text-white/80 text-sm">View Collection</p>
+                  </div>
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">
+                No featured work available at the moment.
+              </p>
+            </div>
+          )}
 
           <div className="text-center mt-12">
             <Button asChild size="lg" variant="outline">

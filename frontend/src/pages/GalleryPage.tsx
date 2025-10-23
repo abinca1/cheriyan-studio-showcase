@@ -245,11 +245,11 @@ const GalleryPage = () => {
             </Button>
           )}
 
-          <div className="max-w-6xl max-h-[90vh] flex items-center justify-center">
+          <div className="flex items-center justify-center p-4">
             <img
               src={selectedImage.src}
               alt={selectedImage.title}
-              className="max-w-full max-h-full object-contain rounded-sm"
+              className="max-w-full max-h-[90vh] object-contain rounded-sm"
               onClick={(e) => e.stopPropagation()}
             />
           </div>
