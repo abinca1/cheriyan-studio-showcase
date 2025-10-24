@@ -90,7 +90,7 @@ const HomePage = () => {
       <Navigation />
 
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
         {/* Hero Slideshow Background */}
         {heroImagesData.length > 0 && (
           <HeroSlideshow images={heroImagesData} interval={5000} />

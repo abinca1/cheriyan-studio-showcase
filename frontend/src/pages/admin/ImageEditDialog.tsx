@@ -34,6 +34,7 @@ import {
 import type { Image, Category } from "@/types";
 import { getImageUrl } from "@/utils/imageUtils";
 import { toast } from "@/hooks";
+import { useToast } from "@/hooks/use-toast";
 
 // Zod validation schema
 const editSchema = z.object({
@@ -97,22 +98,35 @@ const ImageEditDialog: React.FC<ImageEditDialogProps> = ({
 
   const {
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { isSubmitting, isDirty },
     reset,
   } = form;
 
-  // Reset form when image changes
+  const { dismiss } = useToast();
 
   const onSubmit = async (data: EditFormData) => {
     if (!image) return;
 
+    dismiss();
+
+    const submittingToast = toast({
+      title: "Updating...",
+      description: "Please wait while we update the image",
+      variant: "info",
+      duration: 2000,
+    });
+
     try {
       const response = await apiClient.put(`/api/images/${image.id}`, data);
+
+      submittingToast.dismiss();
 
       if (response?.data?.success) {
         toast({
           title: "Success",
           description: "Image updated successfully",
+          variant: "success",
+          duration: 1500,
         });
         onSuccess();
         onOpenChange(false);
@@ -121,11 +135,14 @@ const ImageEditDialog: React.FC<ImageEditDialogProps> = ({
         throw new Error("Update failed");
       }
     } catch (error) {
+      submittingToast.dismiss();
+
       toast({
         title: "Error",
         description:
           error instanceof Error ? error.message : "Failed to update image",
         variant: "destructive",
+        duration: 2000,
       });
     }
   };
@@ -145,18 +162,18 @@ const ImageEditDialog: React.FC<ImageEditDialogProps> = ({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-4">
-          {image && (
-            <div className="mb-4 w-full">
-              <img
-                src={getImageUrlForDialog(image)}
-                alt={image.title}
-                className="w-full max-h-80 object-contain rounded-lg border bg-gray-50"
-              />
-            </div>
-          )}
-
           <Form {...form}>
             <form onSubmit={handleSubmit(onSubmit)}>
+              {image && (
+                <div className="mb-4 w-full">
+                  <img
+                    src={getImageUrlForDialog(image)}
+                    alt={image.title}
+                    className="w-full max-h-80 object-contain rounded-lg border bg-gray-50"
+                  />
+                </div>
+              )}
+
               <div className="grid gap-4">
                 <FormField
                   control={form.control}
@@ -189,6 +206,7 @@ const ImageEditDialog: React.FC<ImageEditDialogProps> = ({
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="category_id"
@@ -334,7 +352,11 @@ const ImageEditDialog: React.FC<ImageEditDialogProps> = ({
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            disabled={isSubmitting || !isDirty}
+            onClick={handleSubmit(onSubmit)}
+          >
             {isSubmitting ? "Updating..." : "Update Image"}
           </Button>
         </DialogFooter>
@@ -342,4 +364,5 @@ const ImageEditDialog: React.FC<ImageEditDialogProps> = ({
     </Dialog>
   );
 };
+
 export default ImageEditDialog;

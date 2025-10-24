@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/form";
 import { Upload, X, Loader2 } from "lucide-react";
 import { toast } from "@/hooks";
+import { useToast } from "@/hooks/use-toast";
 
 // Zod validation schema
 const uploadSchema = z.object({
@@ -104,6 +105,8 @@ const ImageUploadDialog: React.FC<ImageUploadDialogProps> = ({
     reset,
   } = form;
 
+  const { dismiss } = useToast();
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
@@ -155,6 +158,15 @@ const ImageUploadDialog: React.FC<ImageUploadDialogProps> = ({
 
     setError("");
 
+    dismiss();
+
+    const uploadingToast = toast({
+      title: "Uploading...",
+      description: "Please wait while we upload the image",
+      variant: "info",
+      duration: 2000,
+    });
+
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -173,10 +185,14 @@ const ImageUploadDialog: React.FC<ImageUploadDialogProps> = ({
         headers: { "Content-Type": "multipart/form-data" },
       });
 
+      uploadingToast.dismiss();
+
       if (response?.data?.success) {
         toast({
           title: "Success",
           description: "Image uploaded successfully",
+          variant: "success",
+          duration: 1500,
         });
         onUpload(response.data.data);
         resetForm();
@@ -185,6 +201,14 @@ const ImageUploadDialog: React.FC<ImageUploadDialogProps> = ({
         throw new Error("Upload failed");
       }
     } catch (err) {
+      uploadingToast.dismiss();
+
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Upload failed",
+        variant: "destructive",
+        duration: 2000,
+      });
       setError(err instanceof Error ? err.message : "Upload failed");
     }
   };
