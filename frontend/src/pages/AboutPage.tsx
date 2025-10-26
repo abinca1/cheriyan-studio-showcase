@@ -102,7 +102,7 @@ const AboutPage = () => {
               </h2>
               <div className="space-y-4 font-body text-muted-foreground leading-relaxed">
                 <p>
-                  With over five years of experience in professional
+                  With over eight years of experience in professional
                   photography, I've had the privilege of capturing countless
                   precious moments and creating lasting memories for my clients.
                 </p>

@@ -88,19 +88,20 @@ const ContactPage = () => {
     {
       icon: Mail,
       label: "Email",
-      value: "hello@cheriyan.photography",
-      href: "mailto:hello@cheriyan.photography",
+      value: "cheriyannooranal790@gmail.com",
+      href: "mailto:cheriyannooranal790@gmail.com",
     },
     {
       icon: Phone,
       label: "Phone",
-      value: "+1 (555) 123-4567",
-      href: "tel:+15551234567",
+      value: "+971 56 104 9874",
+      href: "tel:+971561049874",
     },
+
     {
       icon: MapPin,
       label: "Studio",
-      value: "123 Photography Lane, Creative City, CC 12345",
+      value: "Dubai Sky Courts, Al Sondos Sage",
       href: "#",
     },
   ];
@@ -223,7 +224,7 @@ const ContactPage = () => {
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder="+1 (555) 123-4567"
+                    placeholder="+971 56 104 9874"
                     className="border border-gray-300 bg-muted/30 focus:border-green-500 focus:bg-white focus-visible:ring-0 transition-colors duration-200"
                     {...register("phone")}
                   />

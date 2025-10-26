@@ -37,7 +37,7 @@ const HeroSlideshow = ({ images, interval = 5000 }: HeroSlideshowProps) => {
           <img
             src={`${apiUrl}/${image?.file_path}`}
             alt={image?.title || `Hero image ${index + 1}`}
-            className="w-full h-full object-contain sm:object-cover md:object-cover lg:object-cover xl:object-cover object-center"
+            className="w-full h-full object-cover object-center"
             style={{
               minHeight: "100vh",
               width: "100%",
