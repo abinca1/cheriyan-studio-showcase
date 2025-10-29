@@ -93,8 +93,33 @@ export const SocialMediaLinks: React.FC<SocialMediaLinksProps> = ({
     return null;
   }
 
+  // Platform-specific colors
+  const getPlatformColor = (platform: string): string => {
+    const platformLower = platform.toLowerCase();
+    if (platformLower.includes("instagram"))
+      return "text-pink-600 hover:text-pink-700";
+    if (platformLower.includes("facebook"))
+      return "text-blue-600 hover:text-blue-700";
+    if (platformLower.includes("twitter") || platformLower.includes("x"))
+      return "text-blue-400 hover:text-blue-500";
+    if (platformLower.includes("linkedin"))
+      return "text-blue-700 hover:text-blue-800";
+    if (platformLower.includes("youtube"))
+      return "text-red-600 hover:text-red-700";
+    if (
+      platformLower.includes("whatsapp") ||
+      platformLower.includes("messagecircle")
+    )
+      return "text-green-600 hover:text-green-700";
+    if (platformLower.includes("mail") || platformLower.includes("email"))
+      return "text-gray-600 hover:text-gray-700";
+    if (platformLower.includes("phone"))
+      return "text-blue-600 hover:text-blue-700";
+    return "text-foreground hover:text-accent";
+  };
+
   return (
-    <div className={`flex items-center space-x-4 ${className}`}>
+    <div className={`flex items-center flex-wrap gap-4 ${className}`}>
       {socialLinks.map((link) => {
         const IconComponent = iconMap[link.platform] || Globe;
 
@@ -104,20 +129,18 @@ export const SocialMediaLinks: React.FC<SocialMediaLinksProps> = ({
             href={link.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="group transition-all duration-300 hover:scale-110"
+            className="group flex items-center space-x-2 transition-all duration-300 hover:scale-110"
             title={link.platform}
           >
-            <div className="flex items-center space-x-2 p-2 rounded-lg bg-background/80 backdrop-blur-sm border border-border/50 hover:bg-accent hover:text-accent-foreground transition-colors">
-              <IconComponent
-                size={iconSize}
-                className="text-muted-foreground group-hover:text-foreground transition-colors"
-              />
-              {showLabels && (
-                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                  {link.platform}
-                </span>
-              )}
-            </div>
+            <IconComponent
+              size={iconSize}
+              className={`${getPlatformColor(link.platform)} transition-colors`}
+            />
+            {showLabels && (
+              <span className="text-sm font-medium text-foreground">
+                {link.platform}
+              </span>
+            )}
           </a>
         );
       })}

@@ -90,7 +90,7 @@ const HomePage = () => {
       <Navigation />
 
       {/* Hero Section */}
-      <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
+      <section className="relative h-[40vh] md:h-screen w-full overflow-hidden">
         {/* Hero Slideshow Background */}
         {heroImagesData.length > 0 && (
           <HeroSlideshow images={heroImagesData} interval={5000} />
@@ -141,7 +141,7 @@ const HomePage = () => {
       </section>
 
       {/* Featured Work Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8">
+      <section className="py-8 md:py-24 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">
@@ -207,7 +207,7 @@ const HomePage = () => {
       </section>
 
       {/* About Preview Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-secondary/50">
+      <section className="py-8 md:py-24 px-4 sm:px-6 lg:px-8 bg-secondary/50">
         <div className="container mx-auto max-w-4xl text-center">
           <h2 className="text-4xl sm:text-5xl font-bold mb-6">
             About the Artist

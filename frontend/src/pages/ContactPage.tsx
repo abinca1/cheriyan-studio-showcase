@@ -100,7 +100,7 @@ const ContactPage = () => {
 
     {
       icon: MapPin,
-      label: "Studio",
+      label: "Address",
       value: "Dubai Sky Courts, Al Sondos Sage",
       href: "#",
     },

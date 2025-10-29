@@ -39,7 +39,7 @@ import ImageUploadDialog from "./ImageUploadDialog";
 import ImageEditDialog from "./ImageEditDialog";
 import { ImageGrid } from "@/components/business";
 import TestimonialDialog from "./TestimonialDialog";
-import HeroSlideDialog from "./HeroSlideDialog";
+import { HeroSlideDialog } from "./HeroSlideDialog";
 import SocialMediaDialog from "./SocialMediaDialog";
 import CategoryDialog from "./CategoryDialog";
 import apiClient from "@/library/axios";
@@ -136,6 +136,9 @@ export const Dashboard: React.FC = () => {
   const [editingImage, setEditingImage] = useState<Image | null>(null);
   const [showTestimonialDialog, setShowTestimonialDialog] = useState(false);
   const [showHeroSlideDialog, setShowHeroSlideDialog] = useState(false);
+  const [editingHeroSlide, setEditingHeroSlide] = useState<HeroSlide | null>(
+    null
+  );
   const [showSocialMediaDialog, setShowSocialMediaDialog] = useState(false);
   const [editingSocialMedia, setEditingSocialMedia] =
     useState<SocialMedia | null>(null);
@@ -230,6 +233,34 @@ export const Dashboard: React.FC = () => {
       toast({
         title: "Error",
         description: "Failed to delete category. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditHeroSlide = (heroSlide: HeroSlide) => {
+    setEditingHeroSlide(heroSlide);
+    setShowHeroSlideDialog(true);
+  };
+
+  const handleDeleteHeroSlide = async (heroSlideId: number) => {
+    if (!confirm("Are you sure you want to delete this hero slide?")) return;
+
+    try {
+      await apiClient.delete(`/api/hero-slides/${heroSlideId}`);
+
+      queryClient.invalidateQueries({ queryKey: ["hero-slides"] });
+
+      toast({
+        title: "Success",
+        description: "Hero slide deleted successfully",
+      });
+    } catch (err) {
+      console.error("Failed to delete hero slide:", err);
+
+      toast({
+        title: "Error",
+        description: "Failed to delete hero slide. Please try again.",
         variant: "destructive",
       });
     }
@@ -441,7 +472,12 @@ export const Dashboard: React.FC = () => {
           <TabsContent value="hero-slides" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold">Hero Slides Management</h2>
-              <Button onClick={() => setShowHeroSlideDialog(true)}>
+              <Button
+                onClick={() => {
+                  setEditingHeroSlide(null);
+                  setShowHeroSlideDialog(true);
+                }}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Hero Slide
               </Button>
@@ -493,18 +529,14 @@ export const Dashboard: React.FC = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() =>
-                              console.log("Edit hero slide:", slide.id)
-                            }
+                            onClick={() => handleEditHeroSlide(slide)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() =>
-                              console.log("Delete hero slide:", slide.id)
-                            }
+                            onClick={() => handleDeleteHeroSlide(slide.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -860,10 +892,14 @@ export const Dashboard: React.FC = () => {
       {/* Hero Slide Dialog */}
       <HeroSlideDialog
         open={showHeroSlideDialog}
-        onOpenChange={setShowHeroSlideDialog}
+        onOpenChange={(open) => {
+          setShowHeroSlideDialog(open);
+          if (!open) setEditingHeroSlide(null);
+        }}
         onSuccess={() =>
           queryClient.invalidateQueries({ queryKey: ["hero-slides"] })
         }
+        heroSlide={editingHeroSlide}
       />
 
       {/* Social Media Dialog */}

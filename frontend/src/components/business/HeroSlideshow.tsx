@@ -19,11 +19,10 @@ const HeroSlideshow = ({ images, interval = 5000 }: HeroSlideshowProps) => {
 
     return () => clearInterval(timer);
   }, [images.length, interval, isPaused]);
-  console.log("URL", `${apiUrl}${images[0]?.file_path}`);
 
   return (
     <div
-      className="absolute inset-0"
+      className="absolute top-12 left-0 right-0 bottom-0 md:inset-0"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -37,9 +36,8 @@ const HeroSlideshow = ({ images, interval = 5000 }: HeroSlideshowProps) => {
           <img
             src={`${apiUrl}/${image?.file_path}`}
             alt={image?.title || `Hero image ${index + 1}`}
-            className="w-full h-full object-cover object-center"
+            className="w-full h-full  md:object-cover object-center"
             style={{
-              minHeight: "100vh",
               width: "100%",
               height: "100%",
             }}

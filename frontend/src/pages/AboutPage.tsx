@@ -9,10 +9,10 @@ import { getImageUrl } from "@/utils/imageUtils";
 
 const AboutPage = () => {
   const stats = [
-    { icon: Camera, value: "5+", label: "Years Experience" },
+    { icon: Camera, value: "8+", label: "Years Experience" },
     // { icon: Award, value: "50+", label: "Awards Won" },
-    { icon: Users, value: "100+", label: "Happy Clients" },
-    { icon: Heart, value: "100+", label: "Projects Completed" },
+    // { icon: Users, value: "100+", label: "Happy Clients" },
+    // { icon: Heart, value: "100+", label: "Projects Completed" },
   ];
 
   // Use TanStack Query for testimonials
@@ -131,11 +131,11 @@ const AboutPage = () => {
           </div>
 
           {/* Stats Section */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-24">
+          {/* <div className="mb-24">
             {stats.map((stat, index) => (
               <div
                 key={index}
-                className="text-center p-6 rounded-sm bg-muted/30 animate-scale-in"
+                className="text-center p-6 rounded-sm bg-muted/30 animate-scale-in max-w-xs mx-auto"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <stat.icon className="w-8 h-8 mx-auto mb-4 text-accent" />
@@ -147,7 +147,7 @@ const AboutPage = () => {
                 </div>
               </div>
             ))}
-          </div>
+          </div> */}
 
           {/* Social Media Section */}
           <div className="text-center mb-24">
@@ -165,95 +165,6 @@ const AboutPage = () => {
                 showLabels={true}
               />
             </div>
-          </div>
-
-          {/* Testimonials Section */}
-          <div className="mb-16">
-            <h2 className="font-display text-4xl font-bold text-center mb-12">
-              Client Testimonials
-            </h2>
-            {loading ? (
-              <div className="text-center py-12">
-                <p className="font-body text-muted-foreground">
-                  Loading testimonials...
-                </p>
-              </div>
-            ) : testimonialsError ? (
-              <div className="text-center py-12">
-                <p className="font-body text-muted-foreground">
-                  Failed to load testimonials. Please try again later.
-                </p>
-              </div>
-            ) : testimonials.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="font-body text-muted-foreground">
-                  No testimonials available.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                {testimonials.map((testimonial, index) => (
-                  <div key={testimonial.id} className="group relative">
-                    {/* Card */}
-                    <div className="bg-white rounded-2xl p-6 border shadow-sm h-64 flex flex-col">
-                      {/* Featured Badge */}
-                      {testimonial.is_featured && (
-                        <div className="absolute -top-3 -right-3">
-                          <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold">
-                            ⭐ Featured
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Quote */}
-                      <div className="mb-6 flex-1">
-                        <p className="text-slate-700 text-lg leading-relaxed italic">
-                          {testimonial.content}
-                        </p>
-                      </div>
-
-                      {/* Rating */}
-                      <div className="flex items-center gap-2 mb-6">
-                        <div className="flex">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-5 w-5 ${
-                                i < (testimonial.rating || 5)
-                                  ? "text-yellow-400 fill-current"
-                                  : "text-slate-300"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-slate-600 font-semibold">
-                          {testimonial.rating || 5}.0
-                        </span>
-                      </div>
-
-                      {/* Author */}
-                      <div className="flex items-center gap-4 pt-4 border-t border-slate-100">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-white font-bold text-lg">
-                          {(testimonial.name || testimonial.client_name || "C")
-                            .charAt(0)
-                            .toUpperCase()}
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-bold text-slate-900 text-lg">
-                            {testimonial.name || testimonial.client_name}
-                          </div>
-                          <div className="text-slate-600">
-                            {testimonial.title ||
-                              testimonial.client_title ||
-                              "Client"}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </div>

@@ -172,7 +172,7 @@ const ImageUploadDialog: React.FC<ImageUploadDialogProps> = ({
       formData.append("file", file);
       formData.append("title", data.title);
       if (data.description) formData.append("description", data.description);
-      if (data.categoryId)
+      if (data.categoryId && !data?.isProfilePicture)
         formData.append("category_id", data.categoryId.toString());
       if (data.tags) formData.append("tags", data.tags);
       formData.append("is_featured", data.isFeatured.toString());

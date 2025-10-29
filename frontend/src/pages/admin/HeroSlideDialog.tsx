@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/form";
 import { Loader2 } from "lucide-react";
 import { toast } from "@/hooks";
-import type { Image } from "@/types";
+import type { Image, HeroSlide } from "@/types";
 
 // Zod validation schema
 const heroSlideSchema = z.object({
@@ -54,13 +54,16 @@ interface HeroSlideDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  heroSlide?: HeroSlide | null;
 }
 
 export const HeroSlideDialog: React.FC<HeroSlideDialogProps> = ({
   open,
   onOpenChange,
   onSuccess,
+  heroSlide = null,
 }) => {
+  const isEditing = !!heroSlide;
   const {
     data: images = [],
     isLoading: loadingImages,
@@ -96,20 +99,61 @@ export const HeroSlideDialog: React.FC<HeroSlideDialogProps> = ({
     reset,
   } = form;
 
+  // Update form when heroSlide prop changes
+  useEffect(() => {
+    if (heroSlide && open) {
+      reset({
+        title: heroSlide.title || "",
+        subtitle: heroSlide.subtitle || "",
+        description: heroSlide.description || "",
+        button_text: heroSlide.button_text || "",
+        button_link: heroSlide.button_link || "",
+        image_id: heroSlide.image_id || 0,
+        is_active: heroSlide.is_active ?? true,
+        sort_order: heroSlide.sort_order || 0,
+      });
+    } else if (!heroSlide && open) {
+      reset({
+        title: "",
+        subtitle: "",
+        description: "",
+        button_text: "",
+        button_link: "",
+        image_id: 0,
+        is_active: true,
+        sort_order: 0,
+      });
+    }
+  }, [heroSlide, open, reset]);
+
   const onSubmit = async (data: HeroSlideFormData) => {
     try {
-      const response = await apiClient.post("/api/hero-slides/", data);
+      let response;
+      if (isEditing && heroSlide) {
+        response = await apiClient.put(
+          `/api/hero-slides/${heroSlide.id}/`,
+          data
+        );
+      } else {
+        response = await apiClient.post("/api/hero-slides/", data);
+      }
 
       if (response?.data?.success) {
         toast({
           title: "Success",
-          description: "Hero slide created successfully",
+          description: isEditing
+            ? "Hero slide updated successfully"
+            : "Hero slide created successfully",
         });
         onSuccess();
         reset();
         onOpenChange(false);
       } else {
-        throw new Error("Failed to create hero slide");
+        throw new Error(
+          isEditing
+            ? "Failed to update hero slide"
+            : "Failed to create hero slide"
+        );
       }
     } catch (error) {
       toast({
@@ -117,6 +161,8 @@ export const HeroSlideDialog: React.FC<HeroSlideDialogProps> = ({
         description:
           error instanceof Error
             ? error.message
+            : isEditing
+            ? "Failed to update hero slide"
             : "Failed to create hero slide",
         variant: "destructive",
       });
@@ -134,9 +180,13 @@ export const HeroSlideDialog: React.FC<HeroSlideDialogProps> = ({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Hero Slide</DialogTitle>
+          <DialogTitle>
+            {isEditing ? "Edit Hero Slide" : "Add New Hero Slide"}
+          </DialogTitle>
           <DialogDescription>
-            Create a new slide for the homepage hero section.
+            {isEditing
+              ? "Update the hero slide details."
+              : "Create a new slide for the homepage hero section."}
           </DialogDescription>
         </DialogHeader>
 
@@ -311,8 +361,10 @@ export const HeroSlideDialog: React.FC<HeroSlideDialogProps> = ({
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
+                    {isEditing ? "Updating..." : "Creating..."}
                   </>
+                ) : isEditing ? (
+                  "Update Hero Slide"
                 ) : (
                   "Create Hero Slide"
                 )}

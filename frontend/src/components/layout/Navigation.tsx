@@ -36,9 +36,9 @@ const Navigation = () => {
 
   // Determine header classes based on route and scroll state
   const getHeaderClasses = () => {
-    // Only home page is transparent when not scrolled
+    // Mobile: always show same background as desktop (no transparent), Desktop: transparent when not scrolled on home
     if (!isScrolled && isHomePage) {
-      return "bg-transparent border-b border-transparent";
+      return "bg-black/20 md:bg-transparent backdrop-blur-lg md:backdrop-blur-none border-b border-white/20 md:border-transparent shadow-lg md:shadow-none";
     }
 
     // Only home page gets glass effects
